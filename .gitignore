@@ -1,0 +1,6 @@
+vendor
+build
+apps
+composer.lock
+.phpunit.result.cache
+_notes/

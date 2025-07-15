@@ -1,0 +1,22 @@
+{
+    "img": {
+        "src": {
+            "width": 1000
+        },
+        "loading": "lazy"
+    },
+    "sources": [
+        {
+            "srcset": [
+                {
+                    "width": 1000,
+                    "descriptor": null,
+                    "mimeType": "image/webp"
+                }
+            ],
+            "attributes": {
+                "type": "image/webp"
+            }
+        }
+    ]
+}

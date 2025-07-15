@@ -1,0 +1,53 @@
+{
+    "img": {
+        "src": {
+            "width": 2000,
+            "height": 480
+        },
+        "loading": "lazy"
+    },
+    "sources": [
+        {
+            "srcset": [
+                {
+                    "width": 2000,
+                    "height": 480,
+                    "descriptor": null,
+                    "mimeType": "image/webp"
+                }
+            ],
+            "attributes": {
+                "type": "image/webp",
+                "media": "(min-width: 1216px)"
+            }
+        },
+        {
+            "srcset": [
+                {
+                    "width": 1216,
+                    "height": 480,
+                    "descriptor": null,
+                    "mimeType": "image/webp"
+                }
+            ],
+            "attributes": {
+                "type": "image/webp",
+                "media": "(min-width: 769px)"
+            }
+        },
+        {
+            "srcset": [
+                {
+                    "width": 768,
+                    "height": 900,
+                    "descriptor": null,
+                    "mimeType": "image/webp"
+                }
+            ],
+            "attributes": {
+                "type": "image/webp",
+                "media": "(max-width: 768px)"
+            }
+        }
+    ]
+}
