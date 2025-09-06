@@ -3,7 +3,9 @@
         "src": {
             "width": 500
         },
-        "loading": "lazy"
+        "attributes": {
+            "loading": "lazy"
+        }
     },
     "sources": [
         {

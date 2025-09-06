@@ -4,7 +4,9 @@
             "width": 200,
             "height": 283
         },
-        "loading": "lazy"
+        "attributes": {
+            "loading": "lazy"
+        }
     },
     "sources": [
         {
