@@ -807,7 +807,7 @@ use Tobento\App\Block\Editor\EditorFactory;
 ],
 ```
 
-Make sure, you have created the corresponding view file like ```views/block/hero-fit``` and ```views/block/hero-editor-fit```, otherwise the default view file is used.
+Make sure, you have created the corresponding view file like ```views/block/hero-fit``` and ```views/block/hero-editable-fit```, otherwise the default view file is used.
 
 ### Margin And Padding Option
 
@@ -912,7 +912,7 @@ Finally, add the view files in the ```viewNamespace``` defined which you want to
 ```
 views/block/custom/
     hero.php
-    hero-editor.php
+    hero-editable.php
     ...
 ```
 
@@ -946,7 +946,7 @@ Next, add the view files in the ```viewNamespace``` defined which you want to cu
 ```
 views/block/custom/
     hero.php
-    hero-editor.php
+    hero-editable.php
     ...
 ```
 
