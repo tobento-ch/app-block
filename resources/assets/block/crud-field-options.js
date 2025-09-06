@@ -16,7 +16,7 @@ const fieldOptions = (function(window, document) {
         register: function() {
             // we add click event globally as not to loose listeners on update DOM
             document.addEventListener('click', (e) => {
-                const actionEl = e.target.closest('[data-options-action]');
+                const actionEl = e.target.closest('modal [data-options-action]');
 
                 if (actionEl) {
                     options.handleClickAction(e, actionEl);
