@@ -1,4 +1,6 @@
 <?php
+use Tobento\Service\Tag\Attributes;
+
 $view->asset('assets/js-editor/editor.css');
 $view->asset('assets/crud/field-text-editor.js')->attr('type', 'module');
 
@@ -18,7 +20,7 @@ $form = $view->form();
         foreach($positions as $i => $position) {
             $blocks = $blocksByPosition[$position] ?? [];
             echo '<div>'.$view->esc($position).'</div>';
-            echo '<div class="content mt-xs mb-m">';
+            echo '<div'.(new Attributes($attributes))->add('class', 'content mt-xs mb-m').'>';
             echo $editor->render(
                 id: $field->name().':'.$position,
                 blocks: $blocks,
@@ -26,7 +28,7 @@ $form = $view->form();
                     'resource_id' => $field->getResourceId(),
                     'resource_group' => $field->getResourceGroup(),
                     'position' => $position,
-                    'storeBlocksToInput' => $field->name().'['.$i.']',
+                    'storeBlocksToInput' => $form->nameToArray($field->name().'.'.$i),
                     'displayAsTextarea' => true,
                 ],
             );

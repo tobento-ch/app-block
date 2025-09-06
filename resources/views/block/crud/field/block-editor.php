@@ -1,4 +1,6 @@
 <?php
+use Tobento\Service\Tag\Attributes;
+
 $view->asset('assets/js-editor/editor.css');
 $view->asset('assets/crud/field-text-editor.js')->attr('type', 'module');
 
@@ -14,12 +16,12 @@ $form = $view->form();
         ) ?>
     </div>
     <div class="field-body">
-        <div class="content">
+        <div<?= (new Attributes($attributes))->add('class', 'content') ?>>
             <?= $editor->render(
                 id: $field->name(),
                 blocks: $blocks,
                 options: [
-                    'storeBlocksToInput' => $field->name(),
+                    'storeBlocksToInput' => $form->nameToArray($field->name()),
                     'displayAsTextarea' => true,
                 ]
             ) ?>
