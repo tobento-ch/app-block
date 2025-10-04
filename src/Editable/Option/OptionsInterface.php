@@ -28,7 +28,7 @@ interface OptionsInterface
      *
      * @param ActionInterface $action
      * @param EditableBlockInterface $block
-     * @return iterable<FieldInterface>|FieldsInterface
+     * @return iterable<int, FieldInterface>|FieldsInterface
      */
     public function configureFields(ActionInterface $action, EditableBlockInterface $block): iterable|FieldsInterface;
     
@@ -51,7 +51,7 @@ interface OptionsInterface
     /**
      * Returns a new instance with the options orderd by the specified names.
      *
-     * @param string ...$name
+     * @param string ...$names
      * @return static
      */
     public function reorder(string ...$names): static;
