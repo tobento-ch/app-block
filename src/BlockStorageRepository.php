@@ -32,21 +32,21 @@ class BlockStorageRepository extends StorageRepository implements BlockRepositor
     protected function configureColumns(): iterable|ColumnsInterface
     {
         return [
-            Column\Id::new(),
-            Column\Text::new('type'),
-            Column\Text::new('editor')->type(length: 100, nullable: false),
-            Column\Text::new('resource_id'),
-            Column\Text::new('resource_group'),
-            Column\Text::new('status')->type(length: 100),
-            Column\Text::new('locale')->type(length: 5),
-            Column\Text::new('position')->type(length: 100),
-            Column\Integer::new('sortorder', type: 'int')->type(unsigned: true, nullable: false),
-            Column\Json::new('options'),
-            Column\Json::new('data'),
-            Column\Text::new('content', type: 'text'),
-            Column\Translatable::new('translation', subtype: 'string'),
-            Column\Translatable::new('translations', subtype: 'array'),
-            Column\Datetime::new(name: 'created_at', type: 'timestamp')->autoCreate(),
+            new Column\Id(),
+            new Column\Text('type'),
+            new Column\Text('editor')->type(length: 100, nullable: false),
+            new Column\Text('resource_id'),
+            new Column\Text('resource_group'),
+            new Column\Text('status')->type(length: 100),
+            new Column\Text('locale')->type(length: 5),
+            new Column\Text('position')->type(length: 100),
+            new Column\Integer(name: 'sortorder', type: 'int')->type(unsigned: true, nullable: false),
+            new Column\Json('options'),
+            new Column\Json('data'),
+            new Column\Text(name: 'content', type: 'text'),
+            new Column\Translatable(name: 'translation', subtype: 'string'),
+            new Column\Translatable(name: 'translations', subtype: 'array'),
+            new Column\Datetime(name: 'created_at', type: 'timestamp')->autoCreate(),
         ];
     }
 
