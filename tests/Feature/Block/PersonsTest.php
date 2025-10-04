@@ -18,7 +18,7 @@ use Tobento\App\Block\EditorsInterface;
 use Tobento\App\Block\Factory\Persons as PersonsFactory;
 use Tobento\App\Testing\Http\AssertableJson;
 
-class PersonsTestTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
+class PersonsTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
 {
     use \Tobento\App\Testing\Database\RefreshDatabases;
     
