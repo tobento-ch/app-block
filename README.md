@@ -59,7 +59,7 @@ composer require tobento/app-block
 
 ## Requirements
 
-- PHP 8.0 or greater
+- PHP 8.4 or greater
 
 # Documentation
 
@@ -84,7 +84,7 @@ use Tobento\App\Block\EditorsInterface;
 use Tobento\App\Block\ResourceResolverInterface;
 
 // Create the app
-$app = (new AppFactory())->createApp();
+$app = new AppFactory()->createApp();
 
 // Add directories:
 $app->dirs()
@@ -279,7 +279,7 @@ You may use the ```BlockEditor::class``` field to easily integrate a block edito
 ```php
 use Tobento\App\Block\Crud\Field\BlockEditor;
 
-BlockEditor::new('blocks')->editor(name: 'default');
+new BlockEditor('blocks')->editor(name: 'default');
 ```
 
 **Workflow**
@@ -322,7 +322,7 @@ use Tobento\App\Block\Middleware\BlockViewsEditor;
 use Tobento\Service\Responser\ResponserInterface;
 
 // Create the app
-$app = (new AppFactory())->createApp();
+$app = new AppFactory()->createApp();
 
 // Add directories:
 $app->dirs()
@@ -403,7 +403,7 @@ If your resource is a [App CRUD](https://github.com/tobento-ch/app-crud) being r
 use Tobento\App\Block\Crud\Field\BlockResourceEditor;
 use Tobento\App\Crud\Entity\EntityInterface;
 
-BlockResourceEditor::new()
+new BlockResourceEditor()
     ->editor('default')
     
     // Set the supported block positions:
@@ -864,9 +864,9 @@ use Tobento\Service\Schedule\Task;
 use Butschster\CronExpression\Generator;
 
 $schedule->task(
-    (new Task\CommandTask(
+    new Task\CommandTask(
         command: 'php ap blocks:purge',
-    ))
+    )
     // schedule task:
     ->cron(Generator::create()->daily())
 );
