@@ -21,9 +21,7 @@ use Tobento\App\Block\EditableBlocks;
 use Tobento\App\Block\EditableBlocksInterface;
 use Tobento\App\Block\Test\Factory;
 
-function trans(string $message, array $parameters = [], null|string $locale = null): string {
-    return $message;
-}
+require_once __DIR__.'/trans_function.php';
 
 class EditableBlocksTest extends TestCase
 {
