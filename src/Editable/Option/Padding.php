@@ -43,28 +43,28 @@ class Padding implements OptionInterface
         $groupName = $action->trans('Padding');
         
         if (in_array('top', $this->supportedPadding)) {
-            yield Field\Select::new('options.padding.top', $action->trans('top'))
+            yield new Field\Select('options.padding.top', $action->trans('top'))
                 ->group($groupName)
                 ->options($this->options($action))
                 ->emptyOption(value: 'none', label: '---');
         }
         
         if (in_array('bottom', $this->supportedPadding)) {
-            yield Field\Select::new('options.padding.bottom', $action->trans('bottom'))
+            yield new Field\Select('options.padding.bottom', $action->trans('bottom'))
                 ->group($groupName)
                 ->options($this->options($action))
                 ->emptyOption(value: 'none', label: '---');
         }
         
         if (in_array('left', $this->supportedPadding)) {
-            yield Field\Select::new('options.padding.left', $action->trans('left'))
+            yield new Field\Select('options.padding.left', $action->trans('left'))
                 ->group($groupName)
                 ->options($this->options($action))
                 ->emptyOption(value: 'none', label: '---');
         }
         
         if (in_array('right', $this->supportedPadding)) {
-            yield Field\Select::new('options.padding.right', $action->trans('right'))
+            yield new Field\Select('options.padding.right', $action->trans('right'))
                 ->group($groupName)
                 ->options($this->options($action))
                 ->emptyOption(value: 'none', label: '---');

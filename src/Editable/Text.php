@@ -84,7 +84,7 @@ final class Text implements EditableBlockInterface
     public function configureFields(ActionInterface $action): iterable|FieldsInterface
     {
         return [
-            Field\Textarea::new(name: 'translation', label: trans('Text'))
+            new Field\Textarea(name: 'translation', label: trans('Text'))
                 ->group(trans('Text'))
                 ->validate('string')
                 ->translatable(),

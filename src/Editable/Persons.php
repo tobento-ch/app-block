@@ -86,25 +86,25 @@ class Persons implements EditableBlockInterface
     public function configureFields(ActionInterface $action): iterable|FieldsInterface
     {
         return [
-            Field\Items::new('data.persons')
+            new Field\Items('data.persons')
                 // you may group the fields
                 ->group('Persons') // set before defining fields!
 
                 // define the fields per item:
                 ->fields(
-                    Field\Text::new(name: 'name', label: trans('Name'))
+                    new Field\Text(name: 'name', label: trans('Name'))
                         ->type('text')
                         ->validate('string|htmlclean|maxLen:100'),
-                    Field\Text::new(name: 'position', label: trans('Position'))
+                    new Field\Text(name: 'position', label: trans('Position'))
                         ->type('text')
                         ->validate('string|htmlclean|maxLen:100'),
-                    Field\Text::new(name: 'email', label: trans('E-Mail'))
+                    new Field\Text(name: 'email', label: trans('E-Mail'))
                         ->type('email')
                         ->validate('email'),
-                    Field\Text::new(name: 'tel', label: trans('Telephone'))
+                    new Field\Text(name: 'tel', label: trans('Telephone'))
                         ->type('tel')
                         ->validate('string|htmlclean|minLen:6|maxLen:20'),
-                    Field\FileSource::new(name: 'image', label: trans('Image'))
+                    new Field\FileSource(name: 'image', label: trans('Image'))
                         ->allowedExtensions('jpg', 'png', 'webp')
                         ->pictureEditor(template: 'default', definitions: $this->pictureDefinitions),
                 )
