@@ -47,11 +47,11 @@ class ArticleController extends AbstractCrudController
     protected function configureFields(ActionInterface $action): iterable|FieldsInterface
     {
         return [
-            Field\PrimaryId::new('id'),
-            Field\Text::new('title'),
-            Field\Slug::new('slug')->fromField('title'),
-            BlockEditor::new('blocks'),
-            BlockResourceEditor::new('resource_blocks')
+            new Field\PrimaryId('id'),
+            new Field\Text('title'),
+            new Field\Slug('slug')->fromField('title'),
+            new BlockEditor('blocks'),
+            new BlockResourceEditor('resource_blocks')
                 ->editable(true)
                 ->storable(true)
                 ->blockPositions('resource.header', 'resource', 'footer')
@@ -67,16 +67,16 @@ class ArticleController extends AbstractCrudController
     protected function configureActions(): iterable|ActionsInterface
     {
         return [
-            Action\Show::new(),
-            Action\ShowJson::new(),
-            //Action\BulkDelete::new(),
-            //Action\BulkEdit::new('bulk-title', 'Edit Title')->field('title'),
-            Action\Index::new('Articles'),
-            Action\Create::new('New Article'),
-            Action\Store::new(),
-            Action\Edit::new('Edit Article'),
-            Action\Update::new(),
-            Action\Delete::new(),
+            new Action\Show(),
+            new Action\ShowJson(),
+            //new Action\BulkDelete(),
+            //new Action\BulkEdit('bulk-title', 'Edit Title')->field('title'),
+            new Action\Index('Articles'),
+            new Action\Create('New Article'),
+            new Action\Store(),
+            new Action\Edit('Edit Article'),
+            new Action\Update(),
+            new Action\Delete(),
         ];
     }
     

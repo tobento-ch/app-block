@@ -23,11 +23,11 @@ class ArticleRepository extends StorageRepository
     protected function configureColumns(): iterable|ColumnsInterface
     {
         return [
-            Column\Id::new(),
-            Column\Text::new(name: 'title'),
-            Column\Text::new(name: 'slug'),
-            Column\Json::new(name: 'blocks'),
-            Column\Json::new(name: 'resource_blocks'),
+            new Column\Id(),
+            new Column\Text(name: 'title'),
+            new Column\Text(name: 'slug'),
+            new Column\Json(name: 'blocks'),
+            new Column\Json(name: 'resource_blocks'),
         ];
     }
 }

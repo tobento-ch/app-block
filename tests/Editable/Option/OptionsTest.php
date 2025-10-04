@@ -38,7 +38,7 @@ class OptionsTest extends TestCase
         $this->assertSame(
             8,
             count($options->configureFields(
-                action: Action\Create::new(),
+                action: new Action\Create(),
                 block: new Editable\Text($options),
             ))
         );
