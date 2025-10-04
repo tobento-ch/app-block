@@ -41,7 +41,13 @@ class PurgeBlocksCommand extends AbstractCommand
      * Handle the command.
      *
      * @param InteractorInterface $io
-     * @param BlockEditorController $blockEditorController
+     * @param EditorsInterface $editors
+     * @param RequesterInterface $requester
+     * @param ResponserInterface $responser
+     * @param RouterInterface $router
+     * @param TranslatorInterface $translator
+     * @param ActionProcessorInterface $actionProcessor
+     * @param ClockInterface $clock
      * @return int The exit status code: 
      *     0 SUCCESS
      *     1 FAILURE If some error happened during the execution
@@ -78,7 +84,7 @@ class PurgeBlocksCommand extends AbstractCommand
                 'status' => 'pending',
                 'created_at' => ['<' => $clock->now()->modify('-1 days')->getTimestamp()],
             ]);
-            
+
             foreach($blocks as $block) {
                 $request = $requester->request()->withParsedBody([
                     'block' => $block->toArray(),
