@@ -68,18 +68,6 @@ class BlockResourceEditor extends AbstractField
         $this->editable(false);
         $this->configure();
     }
-
-    /**
-     * Create a new instance.
-     *
-     * @param string $name
-     * @param null|string $label
-     * @return static
-     */
-    public static function new(string $name, null|string $label = null): static
-    {
-        return new static($name, $label);
-    }
     
     /**
      * Sets the editor.
@@ -128,7 +116,7 @@ class BlockResourceEditor extends AbstractField
     /**
      * Sets the resource id.
      *
-     * @param string|callable $id
+     * @param string $group
      * @return static $this
      */
     public function resourceGroup(string $group): static
