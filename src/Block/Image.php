@@ -115,6 +115,6 @@ class Image implements BlockInterface
     protected function calculateSize(int $targetSize, int $sizeA, int $sizeB): int
     {
         $ratio = $sizeB / $sizeA;
-        return (int) round($targetSize * $ratio);
+        return (int) round((float)$targetSize * (float)$ratio);
     }
 }
