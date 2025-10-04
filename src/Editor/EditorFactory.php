@@ -61,7 +61,6 @@ class EditorFactory implements EditorFactoryInterface
      * @param ContainerInterface $container
      * @param BlockRepositoryInterface $blockRepository
      * @param null|EditableBlocksInterface $editableBlocks
-     * @param null|BlockFactory $blockFactory
      */
     final public function __construct(
         protected ContainerInterface $container,
@@ -121,7 +120,6 @@ class EditorFactory implements EditorFactoryInterface
     /**
      * Add editable blocks.
      *
-     * @param string $name An unique name.
      * @param array<string, string|array|EditableBlockInterface> $blocks
      * @return static $this
      */
