@@ -16,7 +16,7 @@ namespace Tobento\App\Block;
 use IteratorAggregate;
 
 /**
- * EditableBlocksInterface
+ * @extends IteratorAggregate<string, EditableBlockInterface>
  */
 interface EditableBlocksInterface extends IteratorAggregate
 {

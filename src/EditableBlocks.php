@@ -146,7 +146,7 @@ final class EditableBlocks implements EditableBlocksInterface
     /**
      * Get iterator.
      *
-     * @return Traversable
+     * @return Traversable<string, EditableBlockInterface>
      */
     public function getIterator(): Traversable
     {
