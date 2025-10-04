@@ -43,7 +43,7 @@ class Layout implements OptionInterface
     public function configureFields(ActionInterface $action): iterable|FieldsInterface
     {
         return [
-            Field\Select::new('options.layout', $action->trans('Layout'))
+            new Field\Select('options.layout', $action->trans('Layout'))
                 ->group($action->trans($this->groupName))
                 ->options($this->options($action))
                 ->emptyOption(value: 'default', label: '---'),

@@ -86,7 +86,7 @@ class Hero implements EditableBlockInterface
     public function configureFields(ActionInterface $action): iterable|FieldsInterface
     {
         return [
-            Field\File::new(name: 'data.image', label: trans('Image'))
+            new Field\File(name: 'data.image', label: trans('Image'))
                 ->group(trans('Image'))
                 ->translatable()
                 ->fileSource(function(Field\FileSource $fs): void {
@@ -94,12 +94,12 @@ class Hero implements EditableBlockInterface
                     $fs->pictureEditor(template: 'default', definitions: $this->pictureDefinitions);
                 })
                 ->fields(
-                    Field\Text::new('alt', trans('Alternative Text'))
+                    new Field\Text('alt', trans('Alternative Text'))
                         ->validate('string|htmlclean')
                         ->translatable(),
                 )
                 ->storeFilenameTo('alt'),
-            Field\Textarea::new(name: 'translation', label: trans('Text'))
+            new Field\Textarea(name: 'translation', label: trans('Text'))
                 ->group(trans('Text'))
                 ->validate('string')
                 ->translatable(),

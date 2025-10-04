@@ -88,7 +88,7 @@ class ImageGallery implements EditableBlockInterface
     public function configureFields(ActionInterface $action): iterable|FieldsInterface
     {
         return [
-            Field\Files::new(name: 'data.images', label: trans('Images'))
+            new Field\Files(name: 'data.images', label: trans('Images'))
                 ->group(trans('Images'))
                 ->numberOfFiles(max: $this->maxNumberOfImages)
                 ->file(function(Field\File $file): void {
@@ -100,10 +100,10 @@ class ImageGallery implements EditableBlockInterface
                     //$file->storeFilenameTo('alt');
                 })
                 ->fields(
-                    Field\Text::new('alt', trans('Alternative Text'))
+                    new Field\Text('alt', trans('Alternative Text'))
                         ->validate('string|htmlclean')
                         ->translatable(),
-                    Field\Text::new('figcaption', trans('A caption for the photo.'))
+                    new Field\Text('figcaption', trans('A caption for the photo.'))
                         ->validate('string|htmlclean')
                         ->translatable(),
                 ),

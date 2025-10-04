@@ -52,14 +52,14 @@ class Classes implements OptionInterface
     {
         if ($this->searchableClasses === false) {
             return [
-                Field\Checkboxes::new('options.classes', $action->trans('Classes'))
+                new Field\Checkboxes('options.classes', $action->trans('Classes'))
                     ->group($action->trans($this->groupName))
                     ->options($this->classes()),
             ];
         }
         
         return [
-            Field\Options::new('options.classes', $action->trans('Classes'))
+            new Field\Options('options.classes', $action->trans('Classes'))
                 ->group($action->trans($this->groupName))
                 ->repository($this->repository())
                 ->toOption(function(object $item): Field\Option {        
@@ -182,8 +182,8 @@ class Classes implements OptionInterface
             protected function configureColumns(): iterable|ColumnsInterface
             {
                 return [
-                    Column\Text::new('class'),
-                    Column\Text::new('title'),
+                    new Column\Text('class'),
+                    new Column\Text('title'),
                 ];
             }
         };

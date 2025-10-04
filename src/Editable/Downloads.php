@@ -90,7 +90,7 @@ class Downloads implements EditableBlockInterface
     public function configureFields(ActionInterface $action): iterable|FieldsInterface
     {
         return [
-            Field\Files::new(name: 'data.files', label: trans('Files'))
+            new Field\Files(name: 'data.files', label: trans('Files'))
                 ->group(trans('Files'))
                 ->numberOfFiles(max: $this->maxNumberOfFiles)
                 ->file(function(Field\File $file): void {
@@ -103,10 +103,10 @@ class Downloads implements EditableBlockInterface
                     $file->storeFilenameTo('name');
                 })
                 ->fields(
-                    Field\Text::new('name', trans('Name'))
+                    new Field\Text('name', trans('Name'))
                         ->validate('string|htmlclean')
                         ->translatable(),
-                    Field\FileSource::new(name: 'image', label: trans('Preview Image'))
+                    new Field\FileSource(name: 'image', label: trans('Preview Image'))
                         ->allowedExtensions('jpg', 'png', 'webp')
                         ->pictureEditor(template: 'default', definitions: $this->pictureDefinitions),
                 ),

@@ -43,28 +43,28 @@ class Margin implements OptionInterface
         $groupName = $action->trans('Margin');
         
         if (in_array('top', $this->supportedMargin)) {
-            yield Field\Select::new('options.margin.top', $action->trans('top'))
+            yield new Field\Select('options.margin.top', $action->trans('top'))
                 ->group($groupName)
                 ->options($this->options($action))
                 ->emptyOption(value: 'none', label: '---');
         }
         
         if (in_array('bottom', $this->supportedMargin)) {
-            yield Field\Select::new('options.margin.bottom', $action->trans('bottom'))
+            yield new Field\Select('options.margin.bottom', $action->trans('bottom'))
                 ->group($groupName)
                 ->options($this->options($action))
                 ->emptyOption(value: 'none', label: '---');
         }
         
         if (in_array('left', $this->supportedMargin)) {
-            yield Field\Select::new('options.margin.left', $action->trans('left'))
+            yield new Field\Select('options.margin.left', $action->trans('left'))
                 ->group($groupName)
                 ->options($this->options($action))
                 ->emptyOption(value: 'none', label: '---');
         }
         
         if (in_array('right', $this->supportedMargin)) {
-            yield Field\Select::new('options.margin.right', $action->trans('right'))
+            yield new Field\Select('options.margin.right', $action->trans('right'))
                 ->group($groupName)
                 ->options($this->options($action))
                 ->emptyOption(value: 'none', label: '---');

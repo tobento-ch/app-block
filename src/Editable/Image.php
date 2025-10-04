@@ -86,7 +86,7 @@ class Image implements EditableBlockInterface
     public function configureFields(ActionInterface $action): iterable|FieldsInterface
     {
         return [
-            Field\File::new(name: 'data.image', label: trans('Image'))
+            new Field\File(name: 'data.image', label: trans('Image'))
                 ->group(trans('Image'))
                 ->translatable()
                 ->fileSource(function(Field\FileSource $fs): void {
@@ -94,13 +94,13 @@ class Image implements EditableBlockInterface
                     $fs->pictureEditor(template: 'default', definitions: $this->pictureDefinitions);
                 })
                 ->fields(
-                    Field\Text::new('alt', trans('Alternative Text'))
+                    new Field\Text('alt', trans('Alternative Text'))
                         ->validate('string|htmlclean')
                         ->translatable(),
-                    Field\Text::new('figcaption', trans('A caption for the photo.'))
+                    new Field\Text('figcaption', trans('A caption for the photo.'))
                         ->validate('string|htmlclean')
                         ->translatable(),
-                    Field\Text::new('width', trans('Width'))
+                    new Field\Text('width', trans('Width'))
                         ->type('number')
                         ->validate('numeric|minNum:50|maxNum:3000'),
                 )

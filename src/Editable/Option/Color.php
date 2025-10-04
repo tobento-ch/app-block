@@ -43,7 +43,7 @@ class Color implements OptionInterface
         $groupName = $action->trans('Color');
         
         if (in_array('background', $this->supportedColors)) {
-            yield Field\Select::new('options.color.background', $action->trans('Background'))
+            yield new Field\Select('options.color.background', $action->trans('Background'))
                 ->group($groupName)
                 ->options($this->options($action))
                 ->emptyOption(value: 'none', label: '---')
@@ -61,7 +61,7 @@ class Color implements OptionInterface
         }
         
         if (in_array('text', $this->supportedColors)) {
-            yield Field\Select::new('options.color.text', $action->trans('Text'))
+            yield new Field\Select('options.color.text', $action->trans('Text'))
                 ->group($groupName)
                 ->options($this->options($action))
                 ->emptyOption(value: 'none', label: '---')
