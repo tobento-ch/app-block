@@ -42,9 +42,7 @@ use Tobento\Service\Responser\ResponserInterface;
 use Tobento\Service\Routing\RouterInterface;
 use Tobento\Service\Translation\TranslatorInterface;
 
-function trans(string $message, array $parameters = [], null|string $locale = null): string {
-    return $message;
-}
+require_once __DIR__.'/../trans_function.php';
 
 class PurgeBlocksCommandTest extends TestCase
 {
@@ -115,9 +113,9 @@ class PurgeBlocksCommandTest extends TestCase
         
         $container->set(ClockInterface::class, (new FrozenClock())->modify('+25 hours'));
         
-        (new TestCommand(
+        new TestCommand(
             command: PurgeBlocksCommand::class,
-        ))
+        )
         ->expectsOutput('Deleted block with the id 1 from editor default')
         ->expectsOutput('Deleted block with the id 3 from editor default')
         ->expectsExitCode(0)
@@ -139,9 +137,9 @@ class PurgeBlocksCommandTest extends TestCase
         
         $container->set(ClockInterface::class, (new FrozenClock())->modify('+23 hours'));
         
-        (new TestCommand(
+        new TestCommand(
             command: PurgeBlocksCommand::class,
-        ))
+        )
         ->expectsExitCode(0)
         ->execute($container);
         
@@ -159,9 +157,9 @@ class PurgeBlocksCommandTest extends TestCase
         
         $container->set(ClockInterface::class, (new FrozenClock())->modify('+25 hours'));
         
-        (new TestCommand(
+        new TestCommand(
             command: PurgeBlocksCommand::class,
-        ))
+        )
         ->expectsOutput('Unable to delete block with the id 1 from editor default: Editable block unknown not found.')
         ->expectsExitCode(0)
         ->execute($container);
