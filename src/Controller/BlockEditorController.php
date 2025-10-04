@@ -68,7 +68,7 @@ class BlockEditorController extends AbstractCrudController
      */
     public function __construct(
         EditorsInterface $editors,
-        protected RequesterInterface $requester,
+        RequesterInterface $requester,
         protected TranslatorInterface $translator,
         protected RouterInterface $router,
     ) {
@@ -112,7 +112,7 @@ class BlockEditorController extends AbstractCrudController
     /**
      * Returns the configured fields.
      *
-     * @param string $actionName
+     * @param ActionInterface $action
      * @return iterable<FieldInterface>|FieldsInterface
      */
     protected function configureFields(ActionInterface $action): iterable|FieldsInterface
@@ -142,12 +142,12 @@ class BlockEditorController extends AbstractCrudController
         $blockFields = $block->configureFields($action);
         
         if (count($this->editor()->locales()) > 1) {
-            yield Field\Select::new('locale', $this->translator->trans('Language to display'))
+            yield new Field\Select('locale', $this->translator->trans('Language to display'))
                 ->group($this->translator->trans('General'))
                 ->selected(value: $this->editor()->locale(), action: 'create')
                 ->options($this->editor()->locales());            
         } else {
-            yield Field\Text::new('locale')
+            yield new Field\Text('locale')
                 ->type('hidden')
                 ->value($this->editor()->locale())
                 ->validate(sprintf('in:%s', $this->editor()->locale()));
@@ -157,38 +157,38 @@ class BlockEditorController extends AbstractCrudController
             yield $blockField;
         }
         
-        yield Field\PrimaryId::new('id')
+        yield new Field\PrimaryId('id')
             ->group('hidden')
             ->type('hidden')
             ->editable()
             ->validate('numeric|minNum:1|maxLen:1000');
-        yield Field\Value::new(name: 'type')
+        yield new Field\Value(name: 'type')
             ->group('hidden')
             ->editable(false)
             ->value($blockType);
-        yield Field\Value::new(name: 'editor')
+        yield new Field\Value(name: 'editor')
             ->group('hidden')
             ->editable(false)
             ->value($this->editor()->name());
-        yield Field\Value::new(name: 'resource_id')
+        yield new Field\Value(name: 'resource_id')
             ->group('hidden')
             ->editable(true)
             ->value($resourceId)
             ->validate('string|htmlclean|maxLen:200');
-        yield Field\Text::new(name: 'resource_group')
+        yield new Field\Text(name: 'resource_group')
             ->group('hidden')
             ->type('hidden')
             ->validate('string|htmlclean|maxLen:200');
-        yield Field\Text::new(name: 'position')
+        yield new Field\Text(name: 'position')
             ->group('hidden')
             ->type('hidden')
             ->validate('string|htmlclean|maxLen:100');
-        yield Field\Text::new('sortorder')
+        yield new Field\Text('sortorder')
             ->group('hidden')
             ->type('hidden')
             ->defaultValue('0')
             ->validate('numeric|minNum:0|maxLen:6');
-        yield Field\Text::new(name: 'status')
+        yield new Field\Text(name: 'status')
             ->group('hidden')
             ->type('hidden')
             ->validate('string|alpha|maxLen:100');
@@ -202,12 +202,12 @@ class BlockEditorController extends AbstractCrudController
     protected function configureActions(): iterable|ActionsInterface
     {
         return [
-            Action\Store::new(),
-            Action\Edit::new()
+            new Action\Store(),
+            new Action\Edit()
                 ->view('block/crud/edit'),
-            Action\Update::new()
+            new Action\Update()
                 ->url((string)$this->router->url('block-editor.update.block')),
-            Action\Delete::new(),
+            new Action\Delete(),
         ];
     }
     
@@ -243,7 +243,6 @@ class BlockEditorController extends AbstractCrudController
     /**
      * Returns the store response.
      *
-     * @param int|string $id
      * @param ActionProcessorInterface $actionProcessor
      * @param RequesterInterface $requester
      * @param ResponserInterface $responser
@@ -324,7 +323,6 @@ class BlockEditorController extends AbstractCrudController
     /**
      * Returns the edit response.
      *
-     * @param int|string $id
      * @param ActionProcessorInterface $actionProcessor
      * @param RequesterInterface $requester
      * @param ResponserInterface $responser
@@ -502,7 +500,6 @@ class BlockEditorController extends AbstractCrudController
     /**
      * Returns the delete response.
      *
-     * @param int|string $id
      * @param ActionProcessorInterface $actionProcessor
      * @param RequesterInterface $requester
      * @param ResponserInterface $responser
@@ -587,13 +584,11 @@ class BlockEditorController extends AbstractCrudController
     /**
      * Returns the create response.
      *
-     * @param ActionProcessorInterface $actionProcessor
      * @param RequesterInterface $requester
      * @param ResponserInterface $responser
      * @return ResponseInterface
      */
     public function reorderBlocks(
-        ActionProcessorInterface $actionProcessor,
         RequesterInterface $requester,
         ResponserInterface $responser,
     ): ResponseInterface {
