@@ -53,7 +53,6 @@ class Block extends Boot
     public function boot(
         Config $config,
         Migration $migration,
-        Crud $crud,
     ): void {
         // Migration:
         $migration->install(\Tobento\App\Block\Migration\Block::class);
