@@ -5,24 +5,24 @@ $attributes->add('class', ['block', 'block-downloads']);
 <div<?= $attributes ?>>
     <?php foreach($files as $file) { ?>
         <?php
-        $storage = $file['storage'] ?? 'downloads';
-        $src = $file['src'] ?? '';
+        $storage = $file->raw(name: 'storage', default: 'downloads');
+        $src = $file->get('src', '');
         $f = $view->fileStorage(storage: $storage)->with('stream', 'mimeType')->file(path: $src);
         ?>
         <div class="mb-m">
             <div class="mb-xs">
-            <?php if (!empty($file['image'])) { ?>
+            <?php if (!empty($file->raw('image'))) { ?>
                 <?= $view->picture(
-                    path: $file['image'],
+                    path: $file->raw('image'),
                     resource: 'uploads',
                     definition: $pictureDefinition,
                     queue: $generateImagesInBackground,
-                )->imgAttr('alt', $file['name'][$locale] ?? $f->name())->imgAttr('loading', 'lazy') ?>
+                )->imgAttr('alt', $file->get(name: 'name', default: $f->name()))->imgAttr('loading', 'lazy') ?>
             <?php } ?>
             </div>
             <div class="text-s">
-                <?php if (!empty($file['name'][$locale])) { ?>
-                    <div class="text-l mb-xs"><?= $view->esc($file['name'][$locale]) ?></div>
+                <?php if ($file->has(name: 'name')) { ?>
+                    <div class="text-l mb-xs"><?= $view->esc($file->get(name: 'name')) ?></div>
                 <?php } else { ?>
                     <div class="text-l mb-xs"><?= $view->esc($f->name()) ?></div>
                 <?php } ?>
