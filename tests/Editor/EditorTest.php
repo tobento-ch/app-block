@@ -38,6 +38,7 @@ class EditorTest extends TestCase
             view: $container->get(ViewInterface::class),
             locale: 'en',
             locales: ['en' => 'English'],
+            localeFallbacks: ['de' => 'en'],
             localized: true,
         );
         
@@ -45,6 +46,7 @@ class EditorTest extends TestCase
         $this->assertSame('foo', $editor->name());
         $this->assertSame('en', $editor->locale());
         $this->assertSame(['en' => 'English'], $editor->locales());
+        $this->assertSame(['de' => 'en'], $editor->localeFallbacks());
         $this->assertTrue($editor->localized());
         $this->assertTrue($blockFactory === $editor->getBlockFactory());
         $this->assertTrue($blockRepository === $editor->getBlockRepository());
