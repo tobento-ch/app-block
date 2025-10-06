@@ -93,8 +93,9 @@ class Downloads implements EditableBlockInterface
             new Field\Files(name: 'data.files', label: trans('Files'))
                 ->group(trans('Files'))
                 ->numberOfFiles(max: $this->maxNumberOfFiles)
+                ->translatable()
                 ->file(function(Field\File $file): void {
-                    //$file->translatable();
+                    $file->translatable();
                     $file->fileSource(function(Field\FileSource $fs): void {
                         $fs->allowedExtensions(...$this->allowedFileExtensions);
                         $fs->storage(name: 'downloads');
