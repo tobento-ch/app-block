@@ -36,6 +36,7 @@ class Editor implements EditorInterface
      * @param ViewInterface $view
      * @param string $locale
      * @param array<string, string> $locales
+     * @param array<string, string> $localeFallbacks
      * @param bool $localized
      */
     public function __construct(
@@ -46,6 +47,7 @@ class Editor implements EditorInterface
         protected ViewInterface $view,
         protected string $locale = 'en',
         protected array $locales = ['en' => 'English'],
+        protected array $localeFallbacks = [],
         protected bool $localized = true,
     ) {}
     
@@ -77,6 +79,16 @@ class Editor implements EditorInterface
     public function locales(): array
     {
         return $this->locales;
+    }
+    
+    /**
+     * Returns the locale fallbacks.
+     *
+     * @return array<string, string>
+     */
+    public function localeFallbacks(): array
+    {
+        return $this->localeFallbacks;
     }
     
     /**
