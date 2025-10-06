@@ -51,6 +51,13 @@ class BlockEntityTest extends TestCase
         $this->assertSame('fr', (new BlockEntity(['locale' => 'de']))->setLocale('fr')->locale());
     }
     
+    public function testLocaleFallbacksMethods()
+    {
+        $this->assertSame([], (new BlockEntity([]))->localeFallbacks());
+        $this->assertSame(['de' => 'en'], (new BlockEntity(['locale_fallbacks' => ['de' => 'en']]))->localeFallbacks());
+        $this->assertSame(['fr' => 'en'], (new BlockEntity(['locale_fallbacks' => ['de' => 'en']]))->setLocaleFallbacks(['fr' => 'en'])->localeFallbacks());
+    }
+    
     public function testResourceIdMethod()
     {
         $this->assertSame(null, (new BlockEntity([]))->resourceId());
