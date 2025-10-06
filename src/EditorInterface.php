@@ -40,6 +40,13 @@ interface EditorInterface
     public function locales(): array;
     
     /**
+     * Returns the locale fallbacks.
+     *
+     * @return array<string, string>
+     */
+    public function localeFallbacks(): array;
+    
+    /**
      * Returns whether it is localized or not.
      *
      * @return bool
