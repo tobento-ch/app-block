@@ -19,6 +19,7 @@ use Tobento\App\Block\BlockEntityInterface;
 use Tobento\App\Block\BlockFactoryInterface;
 use Tobento\App\Block\BlockInterface;
 use Tobento\App\Block\Exception\BlockCreateException;
+use Tobento\App\Crud\Collection\Items;
 use Tobento\Service\View\ViewInterface;
 
 /**
@@ -88,10 +89,16 @@ class Downloads implements BlockFactoryInterface
             $files = [];
         }
         
+        $locale = $block['locale'] ?? 'en';
+        
         return new Block\Downloads(
             view: $this->view,
             options: $options,
-            files: $files,
+            files: new Items(
+                items: $files,
+                locale: $locale,
+                localeFallbacks: $block['localeFallbacks'] ?? [],
+            ),
             generateImagesInBackground: $this->generateImagesInBackground,
             viewName: $viewName,
         );
@@ -111,6 +118,8 @@ class Downloads implements BlockFactoryInterface
             'options' => $entity->options(),
             'files' => $entity->get('data.files', []),
             'editable' => $entity->editable(),
+            'locale' => $entity->locale(),
+            'localeFallbacks' => $entity->localeFallbacks(),
         ]);
     }
 }
