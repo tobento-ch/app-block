@@ -85,6 +85,11 @@ class DownloadsTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
                     'name' => ['en' => 'Filename'],
                 ],
             ],
+            'options' => [
+                'padding' => [
+                    'top' => 'xs',
+                ],
+            ],
         ]);
         
         $rendered = $block->render();
@@ -98,6 +103,7 @@ class DownloadsTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
             $rendered
         );
         $this->assertStringContainsString('Filename', $rendered);
+        $this->assertStringContainsString('<div class="pt-xs block block-downloads', $rendered);
     }
     
     public function testBlockRenderWithMailNamespace()
@@ -134,21 +140,6 @@ class DownloadsTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
         $this->assertStringContainsString('Filename', $rendered);
     }
     
-    public function testBlockRenderWithOptions()
-    {
-        $app = $this->bootingApp();
-        
-        $block = $app->make(DownloadsFactory::class)->createBlock([
-            'options' => [
-                'padding' => [
-                    'top' => 'xs',
-                ],
-            ],
-        ]);
-        
-        $this->assertStringContainsString('<div class="pt-xs block block-downloads', $block->render());
-    }
-    
     public function testStoreAction()
     {
         $this->fakeConfig()->with('media.features', $this->getMediaFeatures());
@@ -165,7 +156,9 @@ class DownloadsTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
                 'data' => [
                     'files' => [
                         [
-                            'src' => $http->getFileFactory()->createImage('image.jpg', 50, 50),
+                            'src' => [
+                                'en' => $http->getFileFactory()->createImage('image.jpg', 50, 50),
+                            ],
                             'name' => [
                                 'en' => 'Filename',
                             ],
@@ -179,12 +172,12 @@ class DownloadsTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
             ->assertStatus(200)
             ->assertJson(fn (AssertableJson $json) =>
                 $json->has(key: 'status', value: 200)
-                     ->has(key: 'block.data.files.0.src', value: 'image.jpg')
+                     ->has(key: 'block.data.files.0.src.en', value: 'image.jpg')
                      ->has(key: 'block.data.files.0.name.en', value: 'Filename')
             );
         
         $block = $this->getCrudRepository()->findById(1);
-        $this->assertSame('image.jpg', $block->get('data.files.0.src'));
+        $this->assertSame('image.jpg', $block->get('data.files.0.src.en'));
         $this->assertSame('Filename', $block->get('data.files.0.name.en'));
     }
     
@@ -238,7 +231,7 @@ class DownloadsTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
             'data' => [
                 'files' => [
                     [
-                        'src' => 'image.jpg',
+                        'src' => ['en' => 'image.jpg'],
                         'name' => ['en' => 'Name'],
                     ],
                 ],
@@ -250,12 +243,12 @@ class DownloadsTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
             ->assertJson(fn (AssertableJson $json) =>
                 $json->has(key: 'status', value: 200)
                      ->has(key: 'block.id', value: 1)
-                     ->has(key: 'block.data.files.0.src', value: 'image.jpg')
+                     ->has(key: 'block.data.files.0.src.en', value: 'image.jpg')
                      ->has(key: 'block.data.files.0.name.en', value: 'Name New')
             );
         
         $block = $this->getCrudRepository()->findById(1);
-        $this->assertSame('image.jpg', $block->get('data.files.0.src'));
+        $this->assertSame('image.jpg', $block->get('data.files.0.src.en'));
         $this->assertSame('Name New', $block->get('data.files.0.name.en'));
     }
 }
