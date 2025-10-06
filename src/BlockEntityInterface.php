@@ -55,6 +55,21 @@ interface BlockEntityInterface
     public function locale(): string;
     
     /**
+     * Sets the locale fallbacks.
+     *
+     * @param array<string, string> $fallbacks
+     * @return static $this
+     */
+    public function setLocaleFallbacks(array $fallbacks): static;
+    
+    /**
+     * Returns the locale fallbacks.
+     *
+     * @return array<string, string>
+     */
+    public function localeFallbacks(): array;
+    
+    /**
      * Returns the resource id.
      *
      * @return null|string
