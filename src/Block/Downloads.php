@@ -15,6 +15,7 @@ namespace Tobento\App\Block\Block;
 
 use Tobento\App\Block\Block\Option\OptionsInterface;
 use Tobento\App\Block\BlockInterface;
+use Tobento\App\Crud\Collection\Items;
 use Tobento\App\Media\Picture\PictureGeneratorInterface;
 use Tobento\Service\Picture\DefinitionInterface;
 use Tobento\Service\View\ViewInterface;
@@ -29,7 +30,7 @@ class Downloads implements BlockInterface
      *
      * @param ViewInterface $view
      * @param OptionsInterface $options
-     * @param array<array-key, array<string, mixed>> $files
+     * @param Items $files
      * @param string|DefinitionInterface $definition
      * @param bool $generateImagesInBackground
      * @param null|string $viewName
@@ -37,7 +38,7 @@ class Downloads implements BlockInterface
     public function __construct(
         protected ViewInterface $view,
         protected OptionsInterface $options,
-        protected array $files = [],
+        protected Items $files,
         protected string|DefinitionInterface $definition = 'block-downloads',
         protected bool $generateImagesInBackground = true,
         protected null|string $viewName = null,
@@ -50,7 +51,7 @@ class Downloads implements BlockInterface
      */
     public function render(): string
     {
-        $view = $this->viewName ?: 'block/image-downloads';
+        $view = $this->viewName ?: 'block/downloads';
 
         return $this->view->render(view: $view, data: [
             'block' => $this,
