@@ -135,7 +135,7 @@ class BlockViewsEditor implements MiddlewareInterface
         $blocks = $editor->getBlockRepository()->findAllByResource($resource);
         
         $blocksByPosition = [];
-        $locale = 'en';
+        $locale = $editor->locale();
         
         if ($editor->getBlockRepository() instanceof LocalesAware) {
             $locale = $editor->getBlockRepository()->getLocale();
@@ -143,6 +143,7 @@ class BlockViewsEditor implements MiddlewareInterface
         
         foreach($blocks as $entity) {
             $entity->setLocale($locale);
+            $entity->setLocaleFallbacks($editor->localeFallbacks());
             $entity->setEditable(false);
             $blocksByPosition[$entity->position()][] = $editor->getBlockFactory()->createBlockFromEntity($entity);
         }
