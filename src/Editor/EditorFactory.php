@@ -276,12 +276,12 @@ class EditorFactory implements EditorFactoryInterface
     public function createEditor(string $name): EditorInterface
     {
         $languages = $this->languages();
-        $defaultLanguage = $languages->default();
+        $currentLanguage = $languages->current();
         
         $blockRepository = $this->blockRepository();
         
         if ($blockRepository instanceof LocalesAware) {
-            $blockRepository->locale($defaultLanguage->key());
+            $blockRepository->locale($currentLanguage->key());
             $blockRepository->locales(...$languages->column('key'));
         }
         
@@ -289,7 +289,7 @@ class EditorFactory implements EditorFactoryInterface
             $blockRepository instanceof StorageRepository
             && $blockRepository->entityFactory() instanceof LocalesAware
         ) {
-            $blockRepository->entityFactory()->locale($defaultLanguage->key());
+            $blockRepository->entityFactory()->locale($currentLanguage->key());
         }
                 
         return new Editor(
@@ -298,8 +298,9 @@ class EditorFactory implements EditorFactoryInterface
             blockRepository: $blockRepository,
             editableBlocks: $this->editableBlocks(),
             view: $this->container->get(ViewInterface::class),
-            locale: $defaultLanguage->key(),
+            locale: $currentLanguage->key(),
             locales: $languages->column('name', 'key'),
+            localeFallbacks: $languages->fallbacks('key'),
             localized: true,
         );
     }
