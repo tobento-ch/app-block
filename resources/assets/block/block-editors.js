@@ -198,6 +198,7 @@ const blockEditors = (function(window, document) {
                 const modalBody = modal.modalEl.querySelector('.modal-body');
                 modalBody.innerHTML = string;
                 modals.register();
+                editor.fire('block.edit.loaded', [this, editor]);
             });
             
             modal.open();
@@ -681,6 +682,12 @@ const blockEditors = (function(window, document) {
         }
         has(id) {
             return (typeof this.editors[id] === 'undefined') ? false : true;
+        }
+        hasCurrent() {
+            if (!this.currentBlock) {
+                return false;
+            }
+            return typeof this.editors[this.currentBlock.editorId] !== 'undefined';
         }
         current() {
             return this.editors[this.currentBlock.editorId];
