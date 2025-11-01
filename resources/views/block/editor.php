@@ -7,7 +7,6 @@ $view->asset('assets/block/block-editors.js')->attr('type', 'module');
 $view->asset('assets/modal/modals.css');
 
 $view->asset('assets/crud/field-items.js')->attr('type', 'module');
-//$view->asset('assets/crud/field-options.js')->attr('type', 'module');
 $view->asset('assets/crud/field-file.js')->attr('type', 'module');
 $view->asset('assets/crud/field-file-source.js')->attr('type', 'module');
 
@@ -20,6 +19,7 @@ $view->asset('assets/media/picture-editors.js')->attr('type', 'module');
 $view->asset('assets/js-notifier/notifier.css');
 
 $view->asset('assets/block/crud-field-options.js')->attr('type', 'module');
+$view->asset('assets/block/crud-field-single-options.js')->attr('type', 'module');
 $view->asset('assets/block/block-text.js')->attr('type', 'module');
 $view->asset('assets/js-editor/editor.js')->attr('type', 'module');
 $view->asset('assets/js-editor/editor.css');
