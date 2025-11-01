@@ -22,7 +22,7 @@ $attributes->add('class', ['block', 'block-downloads']);
             </div>
             <div class="text-s">
                 <?php if ($file->has(name: 'name')) { ?>
-                    <div class="text-l mb-xs"><?= $view->esc($file->get(name: 'name')) ?></div>
+                    <div class="text-l mb-xs"><?= $view->esc($file->get(name: 'name', default: '')) ?></div>
                 <?php } else { ?>
                     <div class="text-l mb-xs"><?= $view->esc($f->name()) ?></div>
                 <?php } ?>

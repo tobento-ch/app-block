@@ -25,7 +25,7 @@ $attributes->add('class', ['block', 'block-downloads', 'cards']);
                 <div class="card-foot overflow-wrap-anywhere">
                     <ul class="unstyled text-xs">
                         <?php if ($file->has(name: 'name')) { ?>
-                            <li class="text-m"><?= $view->esc($file->get(name: 'name')) ?></li>
+                            <li class="text-m"><?= $view->esc($file->get(name: 'name', default: '')) ?></li>
                         <?php } else { ?>
                             <li class="text-m"><?= $view->esc($f->name()) ?></li>
                         <?php } ?>
