@@ -13,10 +13,15 @@ const fieldOptions = (function(window, document) {
     }
 
     const options = {
+        defaultScriptLoaded: false,
         register: function() {
+            options.defaultScriptLoaded = Array.from(document.getElementsByTagName('script')).some(script =>
+                script.src && script.src.endsWith('crud/field-options.js')
+            );
+            
             // we add click event globally as not to loose listeners on update DOM
             document.addEventListener('click', (e) => {
-                const actionEl = e.target.closest('modal [data-options-action]');
+                const actionEl = e.target.closest('.modal-block [data-options-action]');
 
                 if (actionEl) {
                     options.handleClickAction(e, actionEl);
@@ -50,32 +55,36 @@ const fieldOptions = (function(window, document) {
             const selectedEl = optionsEl.querySelector('[data-selected]');
             const unselectedEl = optionsEl.querySelector('[data-unselected]');
             
-            switch (actionEl.getAttribute('data-options-action')) {
-                case 'add':
-                    e.preventDefault();
-                    actionEl.setAttribute('data-options-action', 'remove');
-                    setTimeout(() => {
-                        actionEl.querySelector('input[type="checkbox"]').checked = true;
-                        selectedEl.appendChild(actionEl);
-                    }, 10);
-                    break;
-                case 'remove':
-                    e.preventDefault();
-                    actionEl.setAttribute('data-options-action', 'add');
-                    setTimeout(() => {
-                        actionEl.querySelector('input[type="checkbox"]').checked = false;
-                        unselectedEl.prepend(actionEl);
-                    }, 10);
-                    break;
+            if (!options.defaultScriptLoaded) {
+                switch (actionEl.getAttribute('data-options-action')) {
+                    case 'add':
+                        e.preventDefault();
+                        actionEl.setAttribute('data-options-action', 'remove');
+                        setTimeout(() => {
+                            actionEl.querySelector('input[type="checkbox"]').checked = true;
+                            selectedEl.appendChild(actionEl);
+                        }, 10);
+                        break;
+                    case 'remove':
+                        e.preventDefault();
+                        actionEl.setAttribute('data-options-action', 'add');
+                        setTimeout(() => {
+                            actionEl.querySelector('input[type="checkbox"]').checked = false;
+                            unselectedEl.prepend(actionEl);
+                        }, 10);
+                        break;
+                }                
             }
             
-            const editor = blockEditors.current();
-            editor.getCurrentBlock().save();
+            setTimeout(() => {
+                const editor = blockEditors.current();
+                editor.getCurrentBlock().save();
+            }, 20);
         },
         search: function(e, actionEl) {
             const optionsEl = e.target.closest('[data-options]');
             
-            if (!optionsEl) {
+            if (!optionsEl || !blockEditors.hasCurrent()) {
                 return;
             }
             
@@ -93,7 +102,7 @@ const fieldOptions = (function(window, document) {
                     "Accept": "application/json"
                 },
                 body: JSON.stringify({
-                    search: dotPathToObj(fieldName, e.target.value),
+                    "options-search": dotPathToObj(fieldName, e.target.value),
                     editor: editor.name,
                     block: {id: block.block.id, type: block.block.type}
                 })
