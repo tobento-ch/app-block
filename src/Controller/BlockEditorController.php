@@ -146,15 +146,18 @@ class BlockEditorController extends AbstractCrudController
                 ->group($this->translator->trans('General'))
                 ->selected(value: $this->editor()->locale(), action: 'create')
                 ->options($this->editor()->locales());            
-        } else {
-            yield new Field\Text('locale')
-                ->type('hidden')
-                ->value($this->editor()->locale())
-                ->validate(sprintf('in:%s', $this->editor()->locale()));
         }
         
         foreach($blockFields as $blockField) {
             yield $blockField;
+        }
+        
+        if (count($this->editor()->locales()) <= 1) {
+            yield new Field\Text('locale')
+                ->group('hidden')
+                ->type('hidden')
+                ->value($this->editor()->locale())
+                ->validate(sprintf('in:%s', $this->editor()->locale()));
         }
         
         yield new Field\PrimaryId('id')
