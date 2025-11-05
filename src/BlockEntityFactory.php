@@ -41,7 +41,9 @@ class BlockEntityFactory extends EntityFactory implements LocalesAware
         if (empty($block->locale())) {
             $block->setLocale($this->getLocale());
         }
-
+        
+        $block->setLocaleFallbacks($this->getLocaleFallbacks());
+        
         return $block;
     }
 }
