@@ -181,6 +181,9 @@ $factory = $factory->withBlockFactory($blockFactory);
 
 You may check out the [App Language](https://github.com/tobento-ch/app-language) to learn more about languages.
 
+> **Warning**
+> When using multiple languages, be sure to define language fallbacks. Certain blocks such as the [download block](#downloads-block) rely on these fallbacks to display correctly. Without a fallback, the download block may not appear at all unless the default language is active.
+
 #### Render Editor
 
 ```php
