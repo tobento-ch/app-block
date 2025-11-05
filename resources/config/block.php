@@ -152,8 +152,8 @@ return [
         EditableOptionsInterface::class => static function(): EditableOptionsInterface {
             return new EditableOptions([
                 //'classes' => new EditableOption\Classes(),
-                'padding' => new EditableOption\Padding(),
                 'margin' => new EditableOption\Margin(),
+                'padding' => new EditableOption\Padding(),
                 'color' => new EditableOption\Color(),
             ]);
         },
