@@ -1,11 +1,12 @@
 @charset "utf-8";
 .block-editor.textarea {border: 1px dotted var(--color-gray-900); padding: 1rem; min-height: 3rem; background: var(--color-white);}
-.block {min-height: 1rem;}
 .modal-block .modal-content {
   box-shadow: 0px 1px 6px 0px var(--color-shadow);
 }
 .block-container {
   position: relative;
+  min-width: 2rem;
+  min-height: 1rem;
 }
 .block-container.highlight {
   outline-color: var(--color-hover);
