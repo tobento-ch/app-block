@@ -290,6 +290,8 @@ class EditorFactory implements EditorFactoryInterface
             && $blockRepository->entityFactory() instanceof LocalesAware
         ) {
             $blockRepository->entityFactory()->locale($currentLanguage->key());
+            $blockRepository->entityFactory()->locales(...$languages->column('key'));
+            $blockRepository->entityFactory()->localeFallbacks($languages->fallbacks('key'));
         }
                 
         return new Editor(
