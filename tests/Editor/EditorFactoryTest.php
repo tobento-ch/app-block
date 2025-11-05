@@ -51,7 +51,7 @@ class EditorFactoryTest extends TestCase
         $languageFactory = new LanguageFactory();
         $languages = new Languages(
             $languageFactory->createLanguage('de', default: true, name: 'Deutsch'),
-            $languageFactory->createLanguage('en', name: 'English'),
+            $languageFactory->createLanguage('en', name: 'English', fallback: 'de'),
         );
         
         $factory = $this->createEditorFactory();
@@ -60,10 +60,20 @@ class EditorFactoryTest extends TestCase
         $editor = $factory->createEditor(name: 'default');
         $this->assertSame('en', $editor->getBlockRepository()->getLocale());
         $this->assertSame(['en'], $editor->getBlockRepository()->getLocales());
+        $this->assertSame([], $editor->getBlockRepository()->getLocaleFallbacks());
+        
+        $this->assertSame('en', $editor->getBlockRepository()->entityFactory()->getLocale());
+        $this->assertSame(['en'], $editor->getBlockRepository()->entityFactory()->getLocales());
+        $this->assertSame([], $editor->getBlockRepository()->entityFactory()->getLocaleFallbacks());
         
         $editor = $factoryNew->createEditor(name: 'default');
         $this->assertSame('de', $editor->getBlockRepository()->getLocale());
         $this->assertSame(['de', 'en'], $editor->getBlockRepository()->getLocales());
+        $this->assertSame([], $editor->getBlockRepository()->getLocaleFallbacks());
+        
+        $this->assertSame('de', $editor->getBlockRepository()->entityFactory()->getLocale());
+        $this->assertSame(['de', 'en'], $editor->getBlockRepository()->entityFactory()->getLocales());
+        $this->assertSame(['en' => 'de'], $editor->getBlockRepository()->entityFactory()->getLocaleFallbacks());
     }    
     
     public function testEditableBlocksMethod()
