@@ -165,5 +165,7 @@ return [
                 new \Tobento\App\Block\ResourceResolver\Slugs(),
             );
         },*/
+        
+        \Tobento\App\Block\ConfiguratorInterface::class => \Tobento\App\Block\NullConfigurator::class,
     ],
 ];
