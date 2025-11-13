@@ -66,8 +66,15 @@ $attributes = new Attributes([
             <input name="blocks_search" type="search" class="small fit" placeholder="<?= $view->etrans('Search for blocks') ?>">
         </div>
         <div class="modal-body">
-            <?php foreach ($editableBlocks->sort() as $editableBlock) { ?>
-                <?php
+            <?php
+            $editableBlocks = $configurator->configureEditableBlocks(
+                for: 'new',
+                blocks: $editableBlocks->sort(),
+                options: $options
+            );
+    
+            foreach ($editableBlocks as $editableBlock) {
+
                 $blockAttributes = new Attributes([
                     'class' => 'mb-s',
                     'data-block-action' => 'add',
