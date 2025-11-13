@@ -83,4 +83,11 @@ interface EditorInterface
      * @return EditableBlocksInterface
      */
     public function getEditableBlocks(): EditableBlocksInterface;
+    
+    /**
+     * Returns the configurator.
+     *
+     * @return ConfiguratorInterface
+     */
+    public function getConfigurator(): ConfiguratorInterface;
 }
