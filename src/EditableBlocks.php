@@ -126,6 +126,44 @@ final class EditableBlocks implements EditableBlocksInterface
     }
     
     /**
+     * Returns a new instance ONLY with the specified blocks.
+     *
+     * @param string ...$names
+     * @return static
+     */
+    public function only(string ...$names): static
+    {
+        $new = clone $this;
+        
+        $new->blocks = array_filter(
+            $new->all(),
+            fn(string $k): bool => in_array($k, $names),
+            ARRAY_FILTER_USE_KEY
+        );
+        
+        return $new;
+    }
+    
+    /**
+     * Returns a new instance EXCEPT with the specified blocks.
+     *
+     * @param string ...$names
+     * @return static
+     */
+    public function except(string ...$names): static
+    {
+        $new = clone $this;
+        
+        $new->blocks = array_filter(
+            $new->all(),
+            fn(string $k): bool => !in_array($k, $names),
+            ARRAY_FILTER_USE_KEY
+        );
+        
+        return $new;
+    }
+    
+    /**
      * Returns all blocks.
      *
      * @return array<string, EditableBlockInterface>
