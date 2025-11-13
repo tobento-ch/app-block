@@ -24,6 +24,8 @@ use Tobento\App\Block\Editor\Editor;
 use Tobento\App\Block\Editor\EditorFactory;
 use Tobento\App\Block\EditorFactoryInterface;
 use Tobento\App\Block\Factory;
+use Tobento\App\Block\NullConfigurator;
+use Tobento\App\Block\Test\Configurator;
 use Tobento\App\Block\Test\Factory as F;
 use Tobento\Service\Language\LanguageFactory;
 use Tobento\Service\Language\Languages;
@@ -149,7 +151,7 @@ class EditorFactoryTest extends TestCase
     
     public function testWithBlockFactoryMethod()
     {
-        $blockFactory = new BlockFactory(container: F::createContainer());
+        $blockFactory = new BlockFactory(container: F::createContainer(), configurator: new NullConfigurator());
         $factory = $this->createEditorFactory();
         $factoryNew = $factory->withBlockFactory($blockFactory);
         
@@ -203,6 +205,16 @@ class EditorFactoryTest extends TestCase
         
         $this->assertFalse($factory === $factoryNew);
         $this->assertTrue($blockRepository === $factoryNew->blockRepository());
+    }
+
+    public function testConfiguratorMethods()
+    {
+        $configurator = new Configurator();
+        $factory = $this->createEditorFactory();
+        $factoryNew = $factory->withConfigurator($configurator);
+        
+        $this->assertFalse($factory === $factoryNew);
+        $this->assertTrue($configurator === $factoryNew->configurator());
     }
     
     public function testLanguagesMethods()
