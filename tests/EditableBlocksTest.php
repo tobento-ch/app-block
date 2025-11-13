@@ -94,6 +94,34 @@ class EditableBlocksTest extends TestCase
         $this->assertSame(['text', 'persons', 'hero'], $blocksNew->names());
     }
     
+    public function testOnlyMethod()
+    {
+        $blocks = new EditableBlocks($this->createContainer());
+        $blocks->add(name: 'text', block: Editable\Text::class);
+        $blocks->add(name: 'hero', block: Editable\Hero::class);
+        $blocks->add(name: 'persons', block: Editable\Persons::class);
+
+        $blocksNew = $blocks->only('text', 'persons');
+        
+        $this->assertFalse($blocks === $blocksNew);
+        $this->assertSame(['text', 'hero', 'persons'], $blocks->names());
+        $this->assertSame(['text', 'persons'], $blocksNew->names());
+    }
+    
+    public function testExceptMethod()
+    {
+        $blocks = new EditableBlocks($this->createContainer());
+        $blocks->add(name: 'text', block: Editable\Text::class);
+        $blocks->add(name: 'hero', block: Editable\Hero::class);
+        $blocks->add(name: 'persons', block: Editable\Persons::class);
+
+        $blocksNew = $blocks->except('text', 'persons');
+        
+        $this->assertFalse($blocks === $blocksNew);
+        $this->assertSame(['text', 'hero', 'persons'], $blocks->names());
+        $this->assertSame(['hero'], $blocksNew->names());
+    }
+    
     public function testNamesMethod()
     {
         $blocks = new EditableBlocks($this->createContainer());
