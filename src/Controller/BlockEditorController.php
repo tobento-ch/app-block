@@ -282,6 +282,8 @@ class BlockEditorController extends AbstractCrudController
         $action->setActions($actions);
         $actionProcessor->preprocessAction(action: $action);
         $action->locales($this->editor()->locales());
+        $entity = $this->createEntityFromArray($block);
+        $action->setEntity($entity);
         
         // Handle input:
         $action->setInput(new Input(
@@ -293,7 +295,11 @@ class BlockEditorController extends AbstractCrudController
             $action->setFields($this->getConfiguredFields(action: $action));
         }
         
-        $action->setFields($action->fields()->creatable());
+        $fields = $action->fields()->creatable();
+        
+        $fields = $this->editor()->getConfigurator()->configureActionFields(action: $action, fields: $fields);
+        
+        $action->setFields($fields);
         
         // Process action:
         $actionProcessor->processAction(action: $action);
@@ -374,7 +380,11 @@ class BlockEditorController extends AbstractCrudController
             $action->setFields($this->getConfiguredFields(action: $action));
         }
         
-        $action->setFields($action->fields()->editable());
+        $fields = $action->fields()->editable();
+        
+        $fields = $this->editor()->getConfigurator()->configureActionFields(action: $action, fields: $fields);
+        
+        $action->setFields($fields);
         
         // Process action:
         $actionProcessor->processAction(action: $action);
@@ -460,6 +470,8 @@ class BlockEditorController extends AbstractCrudController
         }
         
         $fields = $action->fields()->editable();
+        
+        $fields = $this->editor()->getConfigurator()->configureActionFields(action: $action, fields: $fields);
         
         if ($requester->isAjax()) {
             $inputKeys = array_merge(array_keys($block), $requester->input()->keys()->all());
@@ -565,6 +577,10 @@ class BlockEditorController extends AbstractCrudController
         if ($action->fields()->empty()) {
             $action->setFields($this->getConfiguredFields(action: $action));
         }
+        
+        $fields = $this->editor()->getConfigurator()->configureActionFields(action: $action, fields: $action->fields());
+        
+        $action->setFields($fields);
         
         // Process action:
         $actionProcessor->processAction(action: $action);
