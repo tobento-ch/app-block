@@ -54,6 +54,22 @@ interface EditableBlocksInterface extends IteratorAggregate
     public function sort(null|callable $callback = null): static;
     
     /**
+     * Returns a new instance ONLY with the specified blocks.
+     *
+     * @param string ...$names
+     * @return static
+     */
+    public function only(string ...$names): static;
+    
+    /**
+     * Returns a new instance EXCEPT with the specified blocks.
+     *
+     * @param string ...$names
+     * @return static
+     */
+    public function except(string ...$names): static;
+    
+    /**
      * Returns all block names.
      *
      * @return array<array-key, string>
