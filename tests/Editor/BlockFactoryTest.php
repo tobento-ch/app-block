@@ -24,6 +24,7 @@ use Tobento\App\Block\Editor\BlockFactory;
 use Tobento\App\Block\Editor\Block\Editor as BlockEditor;
 use Tobento\App\Block\Exception\BlockCreateException;
 use Tobento\App\Block\Factory;
+use Tobento\App\Block\NullConfigurator;
 use Tobento\App\Block\Test\Factory as F;
 
 class BlockFactoryTest extends TestCase
@@ -35,6 +36,7 @@ class BlockFactoryTest extends TestCase
         
         return new BlockFactory(
             container: $container,
+            configurator: new NullConfigurator(),
             viewNamespace: $viewNamespace,
         );
     }
