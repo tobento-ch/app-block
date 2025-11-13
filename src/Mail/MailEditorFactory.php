@@ -29,6 +29,6 @@ class MailEditorFactory extends EditorFactory
      */
     protected function createBlockFactory(): BlockFactoryInterface
     {
-        return new BlockFactory(container: $this->container, viewNamespace: 'mail');
+        return new BlockFactory(container: $this->container, configurator: $this->configurator(), viewNamespace: 'mail');
     }
 }
