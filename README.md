@@ -40,6 +40,7 @@ Editing blocks is kept simple having clients in minds. Furthermore, blocks use C
         - [Color Option](#color-option)
         - [Layout Option](#layout-option)
         - [Margin And Padding Option](#margin-and-padding-option)
+    - [Configurator](#configurator)
     - [Deleting Generated Pictures](#deleting-generated-pictures)
     - [Console](#console)
         - [Purge Blocks Command](#purge-blocks-command)
@@ -81,6 +82,7 @@ The block boot does the following:
 use Tobento\App\AppFactory;
 use Tobento\App\Block\BlockRepositoryInterface;
 use Tobento\App\Block\EditorsInterface;
+use Tobento\App\Block\ConfiguratorInterface;
 use Tobento\App\Block\ResourceResolverInterface;
 
 // Create the app
@@ -101,6 +103,7 @@ $app->booting();
 // Implemented interfaces:
 $blockRepository = $app->get(BlockRepositoryInterface::class);
 $editors = $app->get(EditorsInterface::class);
+$configurator = $app->get(ConfiguratorInterface::class);
 $resourceResolver = $app->get(ResourceResolverInterface::class);
 
 // Run the app
@@ -151,6 +154,7 @@ You may use the following methods to configure your editor to fit your requireme
 ```php
 use Tobento\App\Block\BlockFactoryInterface;
 use Tobento\App\Block\BlockRepositoryInterface;
+use Tobento\App\Block\ConfiguratorInterface;
 use Tobento\App\Block\Editable;
 use Tobento\App\Block\Factory;
 use Tobento\Service\Language\LanguagesInterface;
@@ -170,6 +174,9 @@ $factory = $factory->withBlockFactory($blockFactory); // BlockFactoryInterface
 
 // You may set another block repository returning a new instance:
 $factory = $factory->withBlockRepository($blockRepository); // BlockRepositoryInterface
+
+// You may set another configurator returning a new instance:
+$factory = $factory->withConfigurator($configurator); // ConfiguratorInterface
 
 // You may set the available editor languages returning a new instance:
 $factory = $factory->withLanguages($languages); // LanguagesInterface
@@ -836,6 +843,143 @@ use Tobento\App\Block\Editable\Option\OptionsInterface as EditableOptionsInterfa
 ],
 ```
 
+## Configurator
+
+You can create a new configurator class to customize or restrict blocks based on specific conditions.
+
+**Creating Configurator**
+
+```php
+use Tobento\App\Block\BlockEntityInterface;
+use Tobento\App\Block\ConfiguratorInterface;
+use Tobento\App\Block\EditableBlocksInterface;
+use Tobento\App\Crud\Action\ActionInterface;
+use Tobento\App\Crud\Field\FieldsInterface;
+use Tobento\App\Http\Exception\HttpException;
+
+class Configurator implements ConfiguratorInterface
+{
+    /**
+     * Configure editable blocks.
+     *
+     * @param string $for
+     * @param EditableBlocksInterface $blocks
+     * @param array<string, mixed> $options
+     * @return EditableBlocksInterface
+     */
+    public function configureEditableBlocks(string $for, EditableBlocksInterface $blocks, array $options): EditableBlocksInterface
+    {
+        // can only add the text and hero block on the resource position:
+        if ($for === 'new' && $options['position'] === 'resource') {
+            return $blocks->only('text', 'hero');
+            // or using the except method:
+            //return $blocks->except('text', 'hero');
+        }
+        
+        return $blocks;
+    }
+    
+    /**
+     * Configure editable block buttons.
+     *
+     * @param array<string, string> $buttons
+     * @param BlockEntityInterface $entity
+     * @return array<string, string>
+     */
+    public function configureEditableBlockButtons(array $buttons, BlockEntityInterface $entity): array
+    {
+        // remove the delete button on the resource position:
+        if ($entity->position() === 'resource') {
+            unset($buttons['delete']);
+            return $buttons;
+        }
+
+        return $buttons;
+    }
+    
+    /**
+     * Configure action fields.
+     *
+     * @param ActionInterface $action
+     * @param FieldsInterface $fields
+     * @return FieldsInterface
+     * @throws HttpException
+     */
+    public function configureActionFields(ActionInterface $action, FieldsInterface $fields): FieldsInterface
+    {
+        $entity = $action->entity();
+        
+        if (
+            in_array($action->name(), ['delete'])
+            && $entity->get('position') === 'header'
+        ) {
+            throw new HttpException(statusCode: 403, message: 'blocks in the header section cannot be deleted at all.');
+        }
+        
+        if (
+            in_array($action->name(), ['edit', 'update', 'delete'])
+            && $entity->get('id') === 12
+        ) {
+            throw new HttpException(statusCode: 403, message: 'block with the id 12 cannot be edited and deleted.');
+        }
+        
+        return $fields;
+    }
+    
+    /**
+     * Configure create block.
+     *
+     * @param array<string, mixed> $block
+     * @return array<string, mixed>
+     */
+    public function configureCreateBlock(array $block): array
+    {
+        return $block;
+    }
+    
+    /**
+     * Configure create block from entity.
+     *
+     * @param BlockEntityInterface $entity
+     * @return BlockEntityInterface
+     */
+    public function configureCreateBlockFromEntity(BlockEntityInterface $entity): BlockEntityInterface
+    {
+        return $entity;
+    }
+}
+```
+
+**Add Configurator Using Editor Factory**
+
+In the [Block Config](#block-config) you can add the configurator for each editor using the editor factory ```withConfigurator``` method:
+
+```php
+use Tobento\App\Block\EditorInterface;
+use Tobento\App\Block\Editor\EditorFactory;
+
+'editors' => [
+    'default' => static function (EditorFactory $factory): EditorInterface {
+    
+        $factory = $factory->withConfigurator(new Configurator());
+        
+        //...
+
+        return $factory->createEditor(name: 'default');
+    },
+],
+```
+
+**Add Configurator Globally**
+
+In the [Block Config](#block-config) you can add the configurator globally for all editors:
+
+```php
+'interfaces' => [
+    \Tobento\App\Block\ConfiguratorInterface::class => Configurator::class,
+],
+```
+
 ## Deleting Generated Pictures
 
 Blocks such as the [Image Block](#image-block) generate pictures using the [Media Picture Feature](https://github.com/tobento-ch/app-media#picture-feature).
@@ -939,7 +1083,11 @@ class CustomEditorFactory extends EditorFactory
      */
     protected function createBlockFactory(): BlockFactoryInterface
     {
-        return new BlockFactory(container: $this->container, viewNamespace: 'custom');
+        return new BlockFactory(
+            container: $this->container,
+            configurator: $this->configurator(),
+            viewNamespace: 'custom',
+        );
     }
 }
 ```
