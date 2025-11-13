@@ -15,6 +15,7 @@ namespace Tobento\App\Block\Editor\Block;
 
 use Tobento\App\Block\BlockInterface;
 use Tobento\App\Block\BlockEntityInterface;
+use Tobento\App\Block\ConfiguratorInterface;
 use Tobento\Service\View\ViewInterface;
 
 /**
@@ -28,11 +29,13 @@ final class Editor implements BlockInterface
      * @param BlockInterface $block
      * @param ViewInterface $view
      * @param BlockEntityInterface $entity
+     * @param ConfiguratorInterface $configurator
      */
     public function __construct(
         private BlockInterface $block,
         private ViewInterface $view,
         private BlockEntityInterface $entity,
+        private ConfiguratorInterface $configurator,
     ) {}
     
     /**
@@ -46,6 +49,7 @@ final class Editor implements BlockInterface
             'editorBlock' => $this,
             'block' => $this->block,
             'entity' => $this->entity,
+            'configurator' => $this->configurator,
         ]);
     }
 }

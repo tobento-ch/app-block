@@ -17,6 +17,7 @@ use Tobento\App\Block\BlockFactoryInterface;
 use Tobento\App\Block\BlockEntityInterface;
 use Tobento\App\Block\BlockInterface;
 use Tobento\App\Block\BlockRepositoryInterface;
+use Tobento\App\Block\ConfiguratorInterface;
 use Tobento\App\Block\EditableBlocksInterface;
 use Tobento\App\Block\EditorInterface;
 use Tobento\Service\View\ViewInterface;
@@ -33,6 +34,7 @@ class Editor implements EditorInterface
      * @param BlockFactoryInterface $blockFactory
      * @param BlockRepositoryInterface $blockRepository
      * @param EditableBlocksInterface $editableBlocks
+     * @param ConfiguratorInterface $configurator
      * @param ViewInterface $view
      * @param string $locale
      * @param array<string, string> $locales
@@ -44,6 +46,7 @@ class Editor implements EditorInterface
         protected BlockFactoryInterface $blockFactory,
         protected BlockRepositoryInterface $blockRepository,
         protected EditableBlocksInterface $editableBlocks,
+        protected ConfiguratorInterface $configurator,
         protected ViewInterface $view,
         protected string $locale = 'en',
         protected array $locales = ['en' => 'English'],
@@ -117,10 +120,9 @@ class Editor implements EditorInterface
             'editorName' => $this->name(),
             'editorId' => $id,
             'blocks' => $this->createBlocks($blocks),
-            //'blockEntities' => $blocks,
             'editableBlocks' => $this->getEditableBlocks(),
+            'configurator' => $this->getConfigurator(),
             'options' => $options,
-            //'locale' => $this->locale(),
         ]);
     }
     
@@ -181,5 +183,15 @@ class Editor implements EditorInterface
     public function getEditableBlocks(): EditableBlocksInterface
     {
         return $this->editableBlocks;
+    }
+    
+    /**
+     * Returns the configurator.
+     *
+     * @return ConfiguratorInterface
+     */
+    public function getConfigurator(): ConfiguratorInterface
+    {
+        return $this->configurator;
     }
 }

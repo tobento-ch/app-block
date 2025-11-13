@@ -18,6 +18,7 @@ use Tobento\App\Block\BlockEntity;
 use Tobento\App\Block\BlockEntityInterface;
 use Tobento\App\Block\BlockFactoryInterface;
 use Tobento\App\Block\BlockInterface;
+use Tobento\App\Block\ConfiguratorInterface;
 use Tobento\App\Block\Exception\BlockCreateException;
 use Tobento\Service\Autowire\Autowire;
 use Tobento\Service\View\ViewInterface;
@@ -47,10 +48,12 @@ class BlockFactory implements BlockFactoryInterface
      * Create a new BlockFactories instance.
      *
      * @param ContainerInterface $container
+     * @param ConfiguratorInterface $configurator
      * @param null|string $viewNamespace
      */
     public function __construct(
         ContainerInterface $container,
+        protected ConfiguratorInterface $configurator,
         null|string $viewNamespace = null,
     ) {
         if ($viewNamespace) {
@@ -115,6 +118,8 @@ class BlockFactory implements BlockFactoryInterface
      */
     public function createBlock(array $block): BlockInterface
     {
+        $block = $this->configurator->configureCreateBlock(block: $block);
+        
         $createdBlock = $this->creatingBlock(block: $block);
 
         if (($block['editable'] ?? true) === false) {
@@ -132,6 +137,7 @@ class BlockFactory implements BlockFactoryInterface
                     'resource_key' => $block['resource_key'] ?? null,
                     'position' => $block['position'] ?? null,
                 ]),
+                configurator: $this->configurator,
             );
         } catch (Throwable $e) {
             throw new BlockCreateException(block: $block, previous: $e);
@@ -147,6 +153,8 @@ class BlockFactory implements BlockFactoryInterface
      */
     public function createBlockFromEntity(BlockEntityInterface $entity): BlockInterface
     {
+        $entity = $this->configurator->configureCreateBlockFromEntity(entity: $entity);
+        
         $createdBlock = $this->creatingBlockFromEntity(entity: $entity);
         
         if ($entity->get('editable') === false) {
@@ -158,6 +166,7 @@ class BlockFactory implements BlockFactoryInterface
                 block: $createdBlock,
                 view: $this->autowire->container()->get(ViewInterface::class),
                 entity: $entity,
+                configurator: $this->configurator,
             );
         } catch (Throwable $e) {
             throw new BlockCreateException(block: $entity->toArray(), previous: $e);
