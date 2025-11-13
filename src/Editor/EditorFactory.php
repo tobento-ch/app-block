@@ -18,11 +18,13 @@ use Tobento\App\Block\BlockEntityFactory;
 use Tobento\App\Block\BlockFactoryInterface;
 use Tobento\App\Block\BlockRepositoryInterface;
 use Tobento\App\Block\BlockStorageRepository;
+use Tobento\App\Block\ConfiguratorInterface;
 use Tobento\App\Block\EditableBlockInterface;
 use Tobento\App\Block\EditableBlocks;
 use Tobento\App\Block\EditableBlocksInterface;
 use Tobento\App\Block\EditorFactoryInterface;
 use Tobento\App\Block\EditorInterface;
+use Tobento\App\Block\NullConfigurator;
 use Tobento\Service\Language\LanguageFactory;
 use Tobento\Service\Language\Languages;
 use Tobento\Service\Language\LanguagesInterface;
@@ -46,6 +48,11 @@ class EditorFactory implements EditorFactoryInterface
     protected EditableBlocksInterface $editableBlocks;
     
     /**
+     * @var ConfiguratorInterface
+     */
+    protected ConfiguratorInterface $configurator;
+    
+    /**
      * @var BlockFactoryInterface
      */
     protected BlockFactoryInterface $blockFactory;
@@ -61,14 +68,17 @@ class EditorFactory implements EditorFactoryInterface
      * @param ContainerInterface $container
      * @param BlockRepositoryInterface $blockRepository
      * @param null|EditableBlocksInterface $editableBlocks
+     * @param null|ConfiguratorInterface $configurator
      */
     final public function __construct(
         protected ContainerInterface $container,
         BlockRepositoryInterface $blockRepository,
         null|EditableBlocksInterface $editableBlocks = null,
+        null|ConfiguratorInterface $configurator = null,
     ) {
         $this->blockRepository = $blockRepository;
         $this->editableBlocks = $editableBlocks ?: $this->createEditableBlocks();
+        $this->configurator = $configurator ?: new NullConfigurator();
         $this->blockFactory = $this->createBlockFactory();
     }
     
@@ -236,6 +246,30 @@ class EditorFactory implements EditorFactoryInterface
     }
     
     /**
+     * Returns a new instance with the specified configurator.
+     *
+     * @param ConfiguratorInterface $configurator
+     * @return static
+     */
+    public function withConfigurator(ConfiguratorInterface $configurator): static
+    {
+        $new = clone $this;
+        $new->configurator = $configurator;
+        $new->blockFactory = $new->createBlockFactory();
+        return $new;
+    }
+    
+    /**
+     * Returns the configurator.
+     *
+     * @return ConfiguratorInterface
+     */
+    public function configurator(): ConfiguratorInterface
+    {
+        return $this->configurator;
+    }
+    
+    /**
      * Returns the languages.
      *
      * @return LanguagesInterface
@@ -293,12 +327,13 @@ class EditorFactory implements EditorFactoryInterface
             $blockRepository->entityFactory()->locales(...$languages->column('key'));
             $blockRepository->entityFactory()->localeFallbacks($languages->fallbacks('key'));
         }
-                
+        
         return new Editor(
             name: $name,
             blockFactory: $this->blockFactory(),
             blockRepository: $blockRepository,
             editableBlocks: $this->editableBlocks(),
+            configurator: $this->configurator(),
             view: $this->container->get(ViewInterface::class),
             locale: $currentLanguage->key(),
             locales: $languages->column('name', 'key'),
@@ -324,6 +359,6 @@ class EditorFactory implements EditorFactoryInterface
      */
     protected function createBlockFactory(): BlockFactoryInterface
     {
-        return new BlockFactory(container: $this->container);
+        return new BlockFactory(container: $this->container, configurator: $this->configurator());
     }
 }
