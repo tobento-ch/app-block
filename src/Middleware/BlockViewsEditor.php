@@ -21,7 +21,7 @@ use Tobento\App\Block\EditorsInterface;
 use Tobento\App\Block\Resource;
 use Tobento\App\Block\ResourceInterface;
 use Tobento\App\Block\ResourceResolverInterface;
-use Tobento\Service\Repository\Storage\LocalesAware;
+use Tobento\Service\Repository\LocalesAware;
 use Tobento\Service\View\ViewInterface;
 
 /**

@@ -28,7 +28,7 @@ use Tobento\App\Block\NullConfigurator;
 use Tobento\Service\Language\LanguageFactory;
 use Tobento\Service\Language\Languages;
 use Tobento\Service\Language\LanguagesInterface;
-use Tobento\Service\Repository\Storage\LocalesAware;
+use Tobento\Service\Repository\LocalesAware;
 use Tobento\Service\Repository\Storage\StorageRepository;
 use Tobento\Service\View\ViewInterface;
 
