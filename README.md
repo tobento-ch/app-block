@@ -41,6 +41,7 @@ Editing blocks is kept simple having clients in minds. Furthermore, blocks use C
         - [Layout Option](#layout-option)
         - [Margin And Padding Option](#margin-and-padding-option)
     - [Configurator](#configurator)
+    - [Performance Notes](#performance-notes)
     - [Deleting Generated Pictures](#deleting-generated-pictures)
     - [Console](#console)
         - [Purge Blocks Command](#purge-blocks-command)
@@ -430,6 +431,11 @@ new BlockResourceEditor()
     // You may disable blocks being editable as they are editable by the middleware:
     ->editable(false) // default true
     
+    // Customize or disable the position title:
+    ->positionTitle(false) // disable title completely
+    // ->positionTitle('Content') // static title
+    // ->positionTitle(fn(string $pos): null|string => sprintf('Position: %s', $pos))  // dynamic title
+    
     // You may enable to store blocks on its field
     // (not recommended if using the middleware to edit blocks as data are not in sync):
     ->storable(true); // default false
@@ -479,14 +485,38 @@ use Tobento\App\Block\Editor\EditorFactory;
 ],
 ```
 
-**Requirements**
+#### Requirements
 
-Make sure you have the ```downloads``` storage added on the ```supportedStorages``` parameter on each of the following features in the ```config/media.php``` file:
+**1. Create the `downloads` File Storage**
+
+You must define a file storage named `downloads` of type [public](https://github.com/tobento-ch/service-file-storage#public-storage) in your `config/file_storage.php` file:
+
+```php
+'storages' => [
+
+    'downloads' => [
+        'factory' => \Tobento\App\FileStorage\FilesystemStorageFactory::class,
+        'config' => [
+            // The location storing the files:
+            'location' => directory('app').'storage/downloads/',
+            
+            // Must be public (web-accessible).
+            'storage_type' => 'public',
+        ],
+    ],
+],
+```
+
+For more information on file storages, visit [App File Storage](https://github.com/tobento-ch/app-file-storage).
+
+**2. Add the Storage to Media Features**
+
+Next, ensure that the `downloads` storage is included in the `supportedStorages` parameter for the relevant features in your `config/media.php` file:
 
 ```php
 'features' => [
     new Feature\File(
-        supportedStorages: ['images', 'uploads', 'downloads'],
+        supportedStorages: ['images', 'downloads'],
     ),
     new Feature\FileDownload(
         supportedStorages: ['downloads'],
@@ -497,7 +527,7 @@ Make sure you have the ```downloads``` storage added on the ```supportedStorages
 ],
 ```
 
-You may check out the [App Media](https://github.com/tobento-ch/app-media) for more information.
+For more details, see [App Media](https://github.com/tobento-ch/app-media).
 
 ### Hero Block
 
@@ -979,6 +1009,57 @@ In the [Block Config](#block-config) you can add the configurator globally for a
     \Tobento\App\Block\ConfiguratorInterface::class => Configurator::class,
 ],
 ```
+
+## Performance Notes
+
+Some block types (e.g. **Image**, **Image Gallery**, **Hero**, **Persons**) may require server-side image processing such as resizing, optimization, and thumbnail generation.  
+These operations can be computationally expensive and may impact the perceived speed of certain actions.
+
+### Editors in General
+
+When editing a block that allows uploading images, the operation may take longer because two steps are involved:
+
+1. The browser uploads the image file to the server.
+2. The server generates all required image variants (resizing, optimization,
+   thumbnails).
+
+The editor waits for this process to complete before updating the block preview.
+This ensures that the block displays with its final image dimensions and avoids
+layout shifts during editing. If you prefer faster interactions, you may enable
+background image generation (see next section), although the block may
+temporarily display fallback images until processing is complete.
+
+### CRUD Editor Field
+
+When using the [Crud Editor Field](#crud-editor-field), the **copy** action may take longer than expected. This is because copying does not simply duplicate the existing block data. Instead, each block is fully recreated on the server using the same logic as when creating a new block. This includes image processing (resizing, optimization, thumbnail generation). Only after all blocks have been recreated does the page render with the updated block list.
+
+This is especially noticeable for image-heavy blocks such as **Image Gallery**, which may generate multiple image variants per image. You may enable background image generation (see next section) to make the page load almost instantly.
+
+Other CRUD actions such as **edit** behave the same way as described in the **Editors in General** section, since they also trigger image processing when images are uploaded or changed.
+
+### Background Image Generation
+
+You may enable background image generation in your block factories in the
+[block config](#block-config) file:
+
+```php
+'generateImagesInBackground' => true
+```
+
+This makes UI interactions faster because the server no longer waits for image
+processing to finish before returning a response. However, blocks may
+temporarily display fallback images (using data: URLs) until the final image
+variants are generated. Depending on your CSS, this can lead to minor layout
+differences until processing is complete.
+
+Background image generation requires a running queue worker, since image processing is handled asynchronously.  
+
+For more details on how images are generated, see the  
+[Picture Feature documentation](https://github.com/tobento-ch/app-media#picture-feature).
+
+To learn how to run queue workers, see the  
+[Queue documentation](https://github.com/tobento-ch/app-queue#running-queues).
+
 
 ## Deleting Generated Pictures
 
