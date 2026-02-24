@@ -13,13 +13,19 @@ declare(strict_types=1);
 
 namespace Tobento\App\Block\Crud\Field;
 
+use Closure;
 use JsonException;
 use Throwable;
+use Tobento\App\AppInterface;
+use Tobento\App\Block\Controller\BlockEditorController;
 use Tobento\App\Block\EditorsInterface;
 use Tobento\App\Block\Resource;
 use Tobento\App\Crud\Action\ActionInterface;
 use Tobento\App\Crud\Field\AbstractField;
 use Tobento\App\Crud\Input\InputInterface;
+use Tobento\Service\Requester\Requester;
+use Tobento\Service\Requester\RequesterInterface;
+use Tobento\Service\Responser\ResponserInterface;
 use Tobento\Service\View\ViewInterface;
 
 /**
@@ -27,6 +33,8 @@ use Tobento\Service\View\ViewInterface;
  */
 class BlockResourceEditor extends AbstractField
 {
+    use \Tobento\App\Logging\LoggerTrait;
+    
     /**
      * @var string
      */
@@ -36,6 +44,11 @@ class BlockResourceEditor extends AbstractField
      * @var array<array-key, string>
      */
     protected array $blockPositions = ['resource'];
+    
+    /**
+     * @var bool|string|Closure
+     */
+    protected bool|string|Closure $positionTitle = true;
     
     /**
      * @var string|callable
@@ -59,8 +72,9 @@ class BlockResourceEditor extends AbstractField
     ) {
         $this->name = $name;
         $this->label = $label;
-        //$this->process('edit', [$this, 'processCreateEdit']);
-        $this->process('create|edit|copy', [$this, 'processCreateEdit']);
+        $this->process('create', [$this, 'processCreate']);
+        $this->process('edit', [$this, 'processEdit']);
+        $this->process('copy', [$this, 'processCopy']);
         $this->process('store|update', [$this, 'processSave']);
         $this->process('stored', [$this, 'processStored']);
         $this->process('delete', [$this, 'processDelete']);
@@ -158,7 +172,36 @@ class BlockResourceEditor extends AbstractField
     }
     
     /**
-     * Processes the create and edit action.
+     * Sets the block position title.
+     *
+     * @param bool|string|Closure $title
+     * @return static $this
+     */
+    public function positionTitle(bool|string|Closure $title): static
+    {
+        $this->positionTitle = $title;
+        return $this;
+    }
+    
+    /**
+     * Returns the position title.
+     *
+     * @param string $position
+     * @return null|string
+     */
+    public function getPositionTitle(string $position): null|string
+    {
+        return match (true) {
+            $this->positionTitle === true => $position,
+            $this->positionTitle === false => null,
+            is_string($this->positionTitle) => $this->positionTitle,
+            is_callable($this->positionTitle) => ($this->positionTitle)($position),
+            default => null,
+        };
+    }
+
+    /**
+     * Processes the create action.
      *
      * @param ActionInterface $action
      * @param BlockResourceEditor $field
@@ -166,7 +209,81 @@ class BlockResourceEditor extends AbstractField
      * @return void
      * @psalm-suppress UndefinedInterfaceMethod
      */
-    public function processCreateEdit(
+    public function processCreate(
+        ActionInterface $action,
+        BlockResourceEditor $field,
+        ViewInterface $view,
+        EditorsInterface $editors,
+    ): void {
+        $editor = $editors->get($field->getEditorName());
+        $attributes = $field->getAttributes();
+        
+        // Restore block IDs from input (after validation error e.g.)
+        $inputBlocks = [];
+
+        foreach ($action->getInput()->get($field->name(), []) as $blocks) {
+            if (!is_string($blocks)) {
+                continue;
+            }
+
+            try {
+                $decoded = json_decode($blocks, true, 512, JSON_THROW_ON_ERROR);
+            } catch (JsonException $e) {
+                $decoded = null;
+            }
+
+            if (is_array($decoded)) {
+                $inputBlocks = array_merge($inputBlocks, $decoded);
+            }
+        }
+
+        $ids = [];
+
+        foreach ($inputBlocks as $inputBlock) {
+            if (isset($inputBlock['id']) && is_numeric($inputBlock['id'])) {
+                $ids[] = (string) $inputBlock['id'];
+            }
+        }
+        
+        $blocks = [];
+        
+        if (!empty($ids)) {
+            /** @var \Tobento\Service\Storage\ItemsInterface $items */
+            $items = $editor->getBlockRepository()->findByIds(...$ids);
+            $blocks = $items->all();
+        }
+        
+        // Blocks by position:
+        $blocksByPosition = [];
+        
+        foreach($blocks as $entity) {
+            $blocksByPosition[$entity->position()][] = $entity;
+        }
+        
+        $field->html($view->render(
+            view: 'block/crud/field/block-resource',
+            data: [
+                'field' => $field,
+                'entity' => $field->entity(),
+                'actionName' => $action->name(),
+                'attributes' => $attributes,
+                'editor' => $editors->get($field->getEditorName()),
+                'blocksByPosition' => $blocksByPosition,
+                'positions' => $field->getBlockPositions(),
+            ],
+        ));
+    }
+    
+    /**
+     * Processes the edit action.
+     *
+     * @param ActionInterface $action
+     * @param BlockResourceEditor $field
+     * @param ViewInterface $view
+     * @return void
+     * @psalm-suppress UndefinedInterfaceMethod
+     */
+    public function processEdit(
         ActionInterface $action,
         BlockResourceEditor $field,
         ViewInterface $view,
@@ -195,6 +312,124 @@ class BlockResourceEditor extends AbstractField
                 'actionName' => $action->name(),
                 'attributes' => $attributes,
                 'editor' => $editors->get($field->getEditorName()),
+                'blocksByPosition' => $blocksByPosition,
+                'positions' => $field->getBlockPositions(),
+            ],
+        ));
+    }
+    
+    /**
+     * Processes the copy action.
+     *
+     * @param ActionInterface $action
+     * @param BlockResourceEditor $field
+     * @param ViewInterface $view
+     * @return void
+     * @psalm-suppress UndefinedInterfaceMethod
+     */
+    public function processCopy(
+        ActionInterface $action,
+        BlockResourceEditor $field,
+        ViewInterface $view,
+        EditorsInterface $editors,
+    ): void {
+        
+        if (!empty($action->getInput()->get($field->name(), []))) {
+            $this->processCreate(
+                action: $action,
+                field: $field,
+                view: $view,
+                editors: $editors,
+            );
+            return;
+        }
+        
+        $editor = $editors->get($field->getEditorName());
+        $repo = $editor->getBlockRepository();
+        $attributes = $field->getAttributes();
+
+        // Resolve temporary resource id for COPY
+        $resourceId = $this->resolveResourceId($action, $field);
+        $resource = new Resource(id: $resourceId, group: $field->getResourceGroup());
+
+        // Load original blocks from resource
+        $originalBlocks = $repo->findAllByResource($resource);
+        
+        $container = $action->container();
+        $app = $container->get(AppInterface::class);
+        $requester = $container->get(RequesterInterface::class);
+        $responser = $container->get(ResponserInterface::class);
+
+        // Prepare controller with editor context
+        $blockEditorController = $app->make(BlockEditorController::class, [
+            'requester' => new Requester(
+                $requester->request()->withQueryParams(['editor' => $editor->name()])
+            ),
+        ]);
+
+        $blocks = [];
+        
+        $tmpResourceId = sprintf('tmp:%s', time());
+        
+        foreach ($originalBlocks as $orig) {
+
+            // only copy resource positioned blocks:
+            if (!str_starts_with($orig->position(), 'resource')) {
+                continue;
+            }
+            
+            // Convert entity to array
+            $block = $orig->toArray();
+
+            unset($block['id'], $block['created_at']);
+            $block['status'] = 'pending';
+            $block['resource_id'] = $tmpResourceId;
+            $block['position'] = $orig->position();
+
+            // Fake POST request
+            $request = $requester->request()
+                ->withMethod('POST')
+                ->withParsedBody(['block' => $block]);
+
+            try {
+                $response = $app->call(
+                    [$blockEditorController, 'storeBlock'],
+                    [
+                        'requester' => new Requester($request),
+                        'responser' => $responser,
+                    ]
+                );
+
+                $payload = json_decode((string)$response->getBody(), true, 512, JSON_THROW_ON_ERROR);
+                $blocks[] = $repo->createEntity($payload['block']);
+
+            } catch (Throwable $e) {
+                $this->getLogger()->error(
+                    message: 'Failed to copy resource block',
+                    context: ['block' => $block, 'exception' => $e],
+                );
+                continue;
+            }
+        }
+
+        // Sort blocks for UI
+        usort($blocks, fn($a, $b) => $a->sortorder() <=> $b->sortorder());
+
+        // Group blocks by position (same as processCreateEdit)
+        $blocksByPosition = [];
+        foreach ($blocks as $entity) {
+            $blocksByPosition[$entity->position()][] = $entity;
+        }
+
+        // Render editor
+        $field->html($view->render(
+            view: 'block/crud/field/block-resource',
+            data: [
+                'field' => $field,
+                'entity' => $field->entity(),
+                'actionName' => $action->name(),
+                'attributes' => $attributes,
+                'editor' => $editor,
                 'blocksByPosition' => $blocksByPosition,
                 'positions' => $field->getBlockPositions(),
             ],
@@ -365,7 +600,7 @@ class BlockResourceEditor extends AbstractField
     ): string {
         $resourceId = $field->getResourceId();
         
-        if (in_array($action->name(), ['create', 'copy'])) {
+        if (in_array($action->name(), ['create'])) {
             $resourceId = sprintf('tmp:%s', time());
         }
         
