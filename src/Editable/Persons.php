@@ -26,6 +26,8 @@ use function Tobento\App\Translation\trans;
  */
 class Persons implements EditableBlockInterface
 {
+    use Traits\NormalizesFileSourceInput;
+    
     /**
      * Create a new Persons instance.
      *
@@ -105,6 +107,7 @@ class Persons implements EditableBlockInterface
                         ->type('tel')
                         ->validate('string|htmlclean|minLen:6|maxLen:20'),
                     new Field\FileSource(name: 'image', label: trans('Image'))
+                        ->storage(name: 'uploads-public')
                         ->allowedExtensions('jpg', 'png', 'webp')
                         ->pictureEditor(template: 'default', definitions: $this->pictureDefinitions),
                 )
@@ -135,6 +138,37 @@ class Persons implements EditableBlockInterface
             foreach(array_keys($persons) as $key) {
                 unset($block['data']['persons'][$key]['image']);
             }
+        }
+        
+        // STORE: convert stored format to FileSource input format
+        if ($action->name() === 'store') {
+
+            $persons = $block['data']['persons'] ?? [];
+
+            if (!is_array($persons)) {
+                return $block;
+            }
+
+            foreach ($persons as $key => $person) {
+
+                if (!is_array($person)) {
+                    continue;
+                }
+
+                // Normalize image into FileSource format
+                if (isset($person['image'])) {
+                    $image = $person['image'];
+
+                    if (is_string($image) && $image !== '') {
+                        $block['data']['persons'][$key]['image'] = [
+                            'storage' => 'uploads-public',
+                            'path'    => $image,
+                        ];
+                    }
+                }
+            }
+
+            return $block;
         }
         
         return $block;
