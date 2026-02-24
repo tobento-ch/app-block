@@ -15,13 +15,13 @@ namespace Tobento\App\Block\Block;
 
 use Tobento\App\Block\Block\Option\OptionsInterface;
 use Tobento\App\Block\BlockInterface;
-use Tobento\App\Media\Picture\PictureGeneratorInterface;
 use Tobento\Service\Imager\ResourceInterface;
 use Tobento\Service\Picture\DefinitionInterface;
+use Tobento\Service\Picture\Generator\PictureGeneratorInterface;
 use Tobento\Service\View\ViewInterface;
 
 /**
- * ImageGallery
+ * ImageGallery block.
  */
 class ImageGallery implements BlockInterface
 {
