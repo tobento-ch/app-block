@@ -97,7 +97,7 @@ const blockEditors = (function(window, document) {
             this.block = block;
             this.toolbar = null;
             this.el.setAttribute('data-block-id', this.id);
-            
+
             // listeners:
             this.el.addEventListener('click', (e) => {
                 
@@ -314,7 +314,7 @@ const blockEditors = (function(window, document) {
             this.blocks = {};
             this.currentBlock = null;
             this.newBlockEl = this.el.querySelector('[data-block-editor-section="new"]');
-            
+
             this.el.setAttribute('data-block-editor-id', this.id);
             
             this.registerBlocks();
@@ -324,26 +324,31 @@ const blockEditors = (function(window, document) {
             if (Object.keys(this.blocks).length === 0) {
                 this.newBlockEl.classList.add('active');
             }
-
-            this.el.addEventListener('focusout', (event) => {
+            
+            // event listeners:
+            this.focusoutListener = (e) => {
                 this.updateBlocksInputField();
-                this.fire('focusout', [event, this]);
-            });
+                this.fire('focusout', [e, this]);
+            };
 
-            this.el.addEventListener('click', (e) => {
+            this.el.addEventListener('focusout', this.focusoutListener);
+            
+            this.clickListener = (e) => {
                 const el = e.target.closest('[data-block-action]');
-                
+
                 if (el && el.getAttribute('data-block-action') === 'new') {
                     editors.closeToolbars();
                     this.newBlock(e, el);
                 }
-            });
+            };
+            
+            this.el.addEventListener('click', this.clickListener);
             
             const modal = modals.get('block-editor-blocks-'+this.id);
             
-            modal.modalEl.addEventListener('click', (e) => {
+            this.modalClickListener = (e) => {
                 const el = e.target.closest('[data-block-action]');
-                
+
                 if (el && el.getAttribute('data-block-action') === 'add') {
                     const modal = modals.get('block-editor-blocks-'+this.id);
                     const block = JSON.parse(el.getAttribute('data-block'));
@@ -351,8 +356,10 @@ const blockEditors = (function(window, document) {
                     modal.close();
                     editors.closeToolbars();
                 }
-            });
+            };
             
+            modal.modalEl.addEventListener('click', this.modalClickListener);
+                
             const modalEdit = modals.get('block-editor-'+this.id);
             this.liveEdit(modalEdit);
             
@@ -458,6 +465,7 @@ const blockEditors = (function(window, document) {
             }
             
             const inputEl = document.querySelector('input[name="'+this.config['storeBlocksToInput']+'"]');
+
             if (inputEl) {
                 inputEl.value = JSON.stringify(this.getBlocksData());
             }
@@ -494,30 +502,34 @@ const blockEditors = (function(window, document) {
         registerBlock(el) {
             const block = JSON.parse(el.getAttribute('data-block'));
             const blockId = uniqueId();
-            
+
             return this.blocks[blockId] = new Block(blockId, this.id, el, block);
         }
         newBlock(event, el) {
+            
             modals.get('block-editor-'+this.id).close();
             
             const modal = modals.get('block-editor-blocks-'+this.id);
             
             modal.listen('open', (modal) => {
+                
                 modal.modalEl.querySelectorAll('[data-block]').forEach(block => {
                     block.classList.remove('display-none');
                 });
-                
+
                 modal.blockEl = el;
                 setTimeout(() => {
                     const input = modal.modalEl.querySelector('input[name="blocks_search"]');
-                    
+
                     if (input) {
                         input.value = '';
                         input.focus();
                     }
                 }, 50);
+
+                modal.listeners = {};
             });
-            
+
             modal.open();
         }
         searchBlocks() {
@@ -617,6 +629,13 @@ const blockEditors = (function(window, document) {
             
             this.fire('block.deleted', [block, this]);
         }
+        destroy() {
+            const modal = modals.get('block-editor-blocks-'+this.id);
+            
+            this.el.removeEventListener('focusout', this.focusoutListener);
+            this.el.removeEventListener('click', this.clickListener);
+            modal.modalEl.removeEventListener('click', this.modalClickListener);
+        }
     }
     
     class Editors {
@@ -667,7 +686,6 @@ const blockEditors = (function(window, document) {
             if (! this.has(config['id'])) {
                 this.editors[config['id']] = new Editor(el, config, this.events);
             }
-            
             return this.editors[config['id']];
         }        
         set(id, obj) {
@@ -678,7 +696,10 @@ const blockEditors = (function(window, document) {
             return this.editors[id];
         }
         delete(id) {
-            delete this.editors[id];
+            if (this.editors[id]) {
+                this.editors[id].destroy();
+                delete this.editors[id];
+            }
         }
         has(id) {
             return (typeof this.editors[id] === 'undefined') ? false : true;
@@ -701,7 +722,7 @@ const blockEditors = (function(window, document) {
             return this.editors;
         }
         closeToolbars() {
-            Object.entries(editors.all()).forEach(([id, editor]) => {
+            Object.entries(this.all()).forEach(([id, editor]) => {
                 Object.entries(editor.blocks).forEach(([id, block]) => {
                     block.getToolbar().close();
                 });
@@ -713,14 +734,31 @@ const blockEditors = (function(window, document) {
         fire(eventName, parameters) {
             this.events.fire(eventName, parameters);
         }
+        unregister() {
+            Object.values(this.editors).forEach(editor => {
+                editor.destroy();
+            });
+            this.editors = {};
+        }
     }
     
     document.addEventListener('DOMContentLoaded', (e) => {
         editors.register();
-        
+
         button.listen('dom.updated', () => {
-            editors.editors = {};
+
+            editors.unregister();
             editors.register();
+            
+            // FIX: reattach modals to the new editor DOM
+            document.querySelectorAll('[data-block-editor-id]').forEach(editorEl => {
+                const id = editorEl.getAttribute('data-block-editor-id');
+                const modal = modals.get('block-editor-blocks-' + id);
+
+                if (modal && modal.modalEl) {
+                    editorEl.append(modal.modalEl);
+                }
+            });
         });
     });
     
