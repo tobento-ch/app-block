@@ -40,7 +40,7 @@ class HeroTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
         $fileStorage = $this->fakeFileStorage();
         $http = $this->fakeHttp();
         $app = $this->bootingApp();
-        $fileStorage->storage(name: 'uploads')->write(
+        $fileStorage->storage(name: 'uploads-public')->write(
             path: 'image-h1.jpg',
             content: (string)$http->getFileFactory()->createImage('image-h1.jpg', 50, 50)->getStream()
         );
@@ -48,7 +48,7 @@ class HeroTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
         $block = $app->make(HeroFactory::class)->createBlock([
             'html' => '<p>lorem</p>',
             'path' => 'image-h1.jpg',
-            'resource' => 'uploads',
+            'resource' => 'uploads-public',
             'imgAlt' => 'Image',
         ]);
         

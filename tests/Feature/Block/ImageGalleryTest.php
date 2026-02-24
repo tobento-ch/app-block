@@ -40,7 +40,7 @@ class ImageGalleryTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
         $fileStorage = $this->fakeFileStorage();
         $http = $this->fakeHttp();
         $app = $this->bootingApp();
-        $fileStorage->storage(name: 'uploads')->write(
+        $fileStorage->storage(name: 'uploads-public')->write(
             path: 'image-g.jpg',
             content: (string)$http->getFileFactory()->createImage('image-g.jpg', 100, 200)->getStream()
         );
@@ -49,7 +49,7 @@ class ImageGalleryTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
             'images' => [
                 [
                     'src' => 'image-g.jpg',
-                    'storage' => 'uploads',
+                    'storage' => 'uploads-public',
                     'alt' => ['en' => 'Image'],
                 ],
             ],
@@ -69,7 +69,7 @@ class ImageGalleryTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
         $fileStorage = $this->fakeFileStorage();
         $http = $this->fakeHttp();
         $app = $this->bootingApp();
-        $fileStorage->storage(name: 'uploads')->write(
+        $fileStorage->storage(name: 'uploads-public')->write(
             path: 'image-g1.jpg',
             content: (string)$http->getFileFactory()->createImage('image-g1.jpg', 50, 50)->getStream()
         );
@@ -78,7 +78,7 @@ class ImageGalleryTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
             'images' => [
                 [
                     'src' => 'image-g1.jpg',
-                    'storage' => 'uploads',
+                    'storage' => 'uploads-public',
                     'alt' => ['en' => 'Image'],
                 ],
             ],

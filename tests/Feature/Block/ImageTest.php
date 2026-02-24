@@ -40,14 +40,14 @@ class ImageTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
         $fileStorage = $this->fakeFileStorage();
         $http = $this->fakeHttp();
         $app = $this->bootingApp();
-        $fileStorage->storage(name: 'uploads')->write(
+        $fileStorage->storage(name: 'uploads-public')->write(
             path: 'image0.jpg',
             content: (string)$http->getFileFactory()->createImage('image0.jpg', 100, 200)->getStream()
         );
         
         $block = $app->make(ImageFactory::class)->createBlock([
             'path' => 'image0.jpg',
-            'resource' => 'uploads',
+            'resource' => 'uploads-public',
             'imgAlt' => 'Image',
         ]);
         
@@ -65,14 +65,14 @@ class ImageTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
         $fileStorage = $this->fakeFileStorage();
         $http = $this->fakeHttp();
         $app = $this->bootingApp();
-        $fileStorage->storage(name: 'uploads')->write(
+        $fileStorage->storage(name: 'uploads-public')->write(
             path: 'image1.jpg',
             content: (string)$http->getFileFactory()->createImage('image1.jpg', 100, 200)->getStream()
         );
         
         $block = $app->make(ImageFactory::class)->createBlock([
             'path' => 'image1.jpg',
-            'resource' => 'uploads',
+            'resource' => 'uploads-public',
             'imgAlt' => 'Image',
             'imgWidth' => 50,
         ]);
@@ -88,14 +88,14 @@ class ImageTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
         $fileStorage = $this->fakeFileStorage();
         $http = $this->fakeHttp();
         $app = $this->bootingApp();
-        $fileStorage->storage(name: 'uploads')->write(
+        $fileStorage->storage(name: 'uploads-public')->write(
             path: 'image2.jpg',
             content: (string)$http->getFileFactory()->createImage('image2.jpg', 50, 50)->getStream()
         );
         
         $block = $app->make(ImageFactory::class)->createBlock([
             'path' => 'image2.jpg',
-            'resource' => 'uploads',
+            'resource' => 'uploads-public',
             'imgAlt' => 'Image',
             'figcaption' => 'Caption',
         ]);
@@ -111,14 +111,14 @@ class ImageTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
         $fileStorage = $this->fakeFileStorage();
         $http = $this->fakeHttp();
         $app = $this->bootingApp();
-        $fileStorage->storage(name: 'uploads')->write(
+        $fileStorage->storage(name: 'uploads-public')->write(
             path: 'image3.jpg',
             content: (string)$http->getFileFactory()->createImage('image3.jpg', 50, 50)->getStream()
         );
         
         $block = $app->make(ImageFactory::class)->withViewNamespace('mail')->createBlock([
             'path' => 'image3.jpg',
-            'resource' => 'uploads',
+            'resource' => 'uploads-public',
             'imgAlt' => 'Image',
         ]);
         
