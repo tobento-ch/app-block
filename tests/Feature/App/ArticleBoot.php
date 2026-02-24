@@ -15,7 +15,7 @@ namespace Tobento\App\Block\Test\Feature\App;
 
 use Tobento\App\Boot;
 use Tobento\App\Crud\Boot\Crud;
-use Tobento\Service\Storage\InMemoryStorage;
+use Tobento\Service\Database\DatabasesInterface;
 
 class ArticleBoot extends Boot
 {
@@ -25,9 +25,9 @@ class ArticleBoot extends Boot
 
     public function boot(Crud $crud)
     {
-        $this->app->set(ArticleRepository::class, function() {
+        $this->app->set(ArticleRepository::class, function(DatabasesInterface $databases) {
             $repo = new ArticleRepository(
-                storage: new InMemoryStorage(items: []),
+                storage: $databases->default('storage')->storage()->new(),
                 table: 'articles',
             );
             
