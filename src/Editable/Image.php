@@ -26,6 +26,8 @@ use function Tobento\App\Translation\trans;
  */
 class Image implements EditableBlockInterface
 {
+    use Traits\NormalizesFileSourceInput;
+    
     /**
      * Create a new Image instance.
      *
@@ -90,6 +92,7 @@ class Image implements EditableBlockInterface
                 ->group(trans('Image'))
                 ->translatable()
                 ->fileSource(function(Field\FileSource $fs): void {
+                    $fs->storage(name: 'uploads-public');
                     $fs->allowedExtensions('jpg', 'png', 'webp');
                     $fs->pictureEditor(template: 'default', definitions: $this->pictureDefinitions);
                 })
@@ -118,8 +121,16 @@ class Image implements EditableBlockInterface
      */
     public function toFields(array $block, ActionInterface $action): array
     {
+        // UPDATE: remove stored src so FileSource keeps existing file
         if ($action->name() === 'update') {
             unset($block['data']['image']['src']);
+        }
+
+        // STORE (copy): convert stored format to FileSource input format
+        if ($action->name() === 'store') {
+            if (isset($block['data']['image'])) {
+                $block['data']['image'] = $this->normalizeFileSource($block['data']['image']);
+            }
         }
         
         return $block;

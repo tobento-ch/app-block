@@ -26,6 +26,8 @@ use function Tobento\App\Translation\trans;
  */
 class Hero implements EditableBlockInterface
 {
+    use Traits\NormalizesFileSourceInput;
+    
     /**
      * Create a new Hero instance.
      *
@@ -90,6 +92,7 @@ class Hero implements EditableBlockInterface
                 ->group(trans('Image'))
                 ->translatable()
                 ->fileSource(function(Field\FileSource $fs): void {
+                    $fs->storage(name: 'uploads-public');
                     $fs->allowedExtensions('jpg', 'png', 'webp');
                     $fs->pictureEditor(template: 'default', definitions: $this->pictureDefinitions);
                 })
@@ -118,6 +121,16 @@ class Hero implements EditableBlockInterface
     {
         if ($action->name() === 'update') {
             unset($block['data']['image']['src']);
+        }
+        
+        // STORE: convert stored format to FileSource input format
+        if ($action->name() === 'store') {
+
+            if (isset($block['data']['image']) && is_array($block['data']['image'])) {
+                $block['data']['image'] = $this->normalizeFileSource($block['data']['image']);
+            }
+
+            return $block;
         }
         
         return $block;

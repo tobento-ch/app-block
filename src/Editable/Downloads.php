@@ -26,6 +26,8 @@ use function Tobento\App\Translation\trans;
  */
 class Downloads implements EditableBlockInterface
 {
+    use Traits\NormalizesFileSourceInput;
+    
     /**
      * Create a new Downloads instance.
      *
@@ -109,6 +111,7 @@ class Downloads implements EditableBlockInterface
                         ->translatable(),
                     new Field\FileSource(name: 'image', label: trans('Preview Image'))
                         ->allowedExtensions('jpg', 'png', 'webp')
+                        ->storage(name: 'uploads-public')
                         ->pictureEditor(template: 'default', definitions: $this->pictureDefinitions),
                 ),
             ...$this->options->configureFields($action, $this),
@@ -135,6 +138,26 @@ class Downloads implements EditableBlockInterface
             foreach(array_keys($files) as $key) {
                 unset($block['data']['files'][$key]['src']);
                 unset($block['data']['files'][$key]['image']);
+            }
+        }
+        
+        if ($action->name() === 'store') {
+            foreach ($block['data']['files'] ?? [] as $key => $file) {
+
+                // Normalize main file
+                $block['data']['files'][$key] = $this->normalizeFileSource($file);
+
+                // Normalize preview image
+                if (isset($file['image'])) {
+                    $image = $file['image'];
+
+                    if (is_string($image) && $image !== '') {
+                        $block['data']['files'][$key]['image'] = [
+                            'storage' => 'uploads-public',
+                            'path'    => $image,
+                        ];
+                    }
+                }
             }
         }
         

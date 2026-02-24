@@ -26,6 +26,8 @@ use function Tobento\App\Translation\trans;
  */
 class ImageGallery implements EditableBlockInterface
 {
+    use Traits\NormalizesFileSourceInput;
+    
     /**
      * Create a new ImageGallery instance.
      *
@@ -94,6 +96,7 @@ class ImageGallery implements EditableBlockInterface
                 ->file(function(Field\File $file): void {
                     //$file->translatable();
                     $file->fileSource(function(Field\FileSource $fs): void {
+                        $fs->storage(name: 'uploads-public');
                         $fs->allowedExtensions('jpg', 'png', 'webp');
                         $fs->pictureEditor(template: 'default', definitions: $this->pictureDefinitions);
                     });
@@ -120,6 +123,7 @@ class ImageGallery implements EditableBlockInterface
      */
     public function toFields(array $block, ActionInterface $action): array
     {
+        // UPDATE: remove stored src so FileSource keeps existing file
         if ($action->name() === 'update') {
             
             $images = $block['data']['images'] ?? [];
@@ -131,6 +135,27 @@ class ImageGallery implements EditableBlockInterface
             foreach(array_keys($images) as $key) {
                 unset($block['data']['images'][$key]['src']);
             }
+        }
+        
+        // STORE: convert stored format to FileSource input format
+        if ($action->name() === 'store') {
+
+            $images = $block['data']['images'] ?? [];
+
+            if (!is_array($images)) {
+                return $block;
+            }
+
+            foreach ($images as $key => $image) {
+                if (!is_array($image)) {
+                    continue;
+                }
+
+                // Normalize using the shared helper
+                $block['data']['images'][$key] = $this->normalizeFileSource($image);
+            }
+
+            return $block;
         }
         
         return $block;
