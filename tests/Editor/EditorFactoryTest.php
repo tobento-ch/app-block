@@ -215,6 +215,7 @@ class EditorFactoryTest extends TestCase
         
         $this->assertFalse($factory === $factoryNew);
         $this->assertTrue($configurator === $factoryNew->configurator());
+        $this->assertTrue($factoryNew->blockFactory()->configurator() === $factoryNew->configurator());
     }
     
     public function testLanguagesMethods()
