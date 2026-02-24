@@ -32,7 +32,7 @@ class CrudBlockEditorTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
     {
         return \Tobento\App\Block\Test\Feature\App\ArticleController::class;
     }
-
+    
     public function testCreateAction()
     {
         $http = $this->fakeHttp();
@@ -42,6 +42,37 @@ class CrudBlockEditorTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
             ->assertStatus(200)
             ->assertCrudFormFieldExists(field: 'blocks')
             ->assertBodyContains('Add Block');
+    }
+    
+    public function testCreateActionRestoresBlocksAfterValidationError()
+    {
+        $http = $this->fakeHttp();
+        $http->request(method: 'POST', uri: $this->generateStoreUri())->body([
+            'title' => 'Foo<p>', // causes validation error as no htmlclean rule
+            'slug' => 'foo',
+            'blocks' => json_encode([[
+                'id' => 1,
+                'type' => 'text',
+                'status' => 'inactive',
+                'position' => 'resource',
+                'translation' => ['en' => 'Text Foo'],
+            ]]),
+        ]);
+        
+        $app = $this->bootingApp();
+        
+        // create block which is done by AJAX:
+        $editor = $app->get(EditorsInterface::class)->get('default');
+        $editor->getBlockRepository()->create([
+            'type' => 'text',
+            'position' => 'resource',
+            'status' => 'pending',
+            'translation' => ['en' => 'Text Bar'],
+        ]);
+        
+        $http->followRedirects()
+            ->assertStatus(200)
+            ->assertBodyContains('Text Bar');
     }
     
     public function testStoreAction()
@@ -77,6 +108,62 @@ class CrudBlockEditorTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
         $this->assertSame('Foo', $entity->get('title'));
         $this->assertSame('Text', $entity->get('blocks.0.translation.en'));
         $this->assertSame('active', $entity->get('blocks.0.status'));
+    }
+    
+    public function testCopyActionRestoresBlocksAfterValidationError()
+    {
+        $http = $this->fakeHttp();
+        $http->previousUri($this->generateCopyUri(id: 1));
+        $http->request(method: 'POST', uri: $this->generateStoreUri())->body([
+            'title' => 'Foo<p>', // invalid
+            'slug' => 'foo',
+            'blocks' => json_encode([[
+                'id' => 1,
+                'type' => 'text',
+                'status' => 'inactive',
+                'position' => 'resource',
+                'translation' => ['en' => 'Text Bar'],
+            ]]),
+        ]);
+
+        $app = $this->bootingApp();
+        $this->getCrudRepository()->create(['title' => 'Foo', 'slug' => 'foo']);
+
+        // Simulate AJAX-created pending block
+        $editor = $app->get(EditorsInterface::class)->get('default');
+        $editor->getBlockRepository()->create([
+            'type' => 'text',
+            'position' => 'resource',
+            'status' => 'pending',
+            'translation' => ['en' => 'Text Baz'],
+        ]);
+        
+        $http->followRedirects()
+            ->assertStatus(200)
+            ->assertBodyContains('Text Baz');
+    }
+
+    public function testCopyAction()
+    {
+        $http = $this->fakeHttp();
+        $http->request(method: 'GET', uri: $this->generateCopyUri(id: 1));
+        
+        $app = $this->bootingApp();
+        $this->getCrudRepository()->create([
+            'title' => 'Foo',
+            'slug' => 'foo',
+            'blocks' => [
+                ['type' => 'text', 'position' => 'resource', 'translation' => ['en' => 'Text Resource']],
+            ]
+        ]);
+        
+        $http->response()
+            ->assertStatus(200)
+            ->assertCrudFormFieldExists(field: 'blocks')
+            ->assertBodyContains('Text Resource');
+        
+        $editor = $app->get(EditorsInterface::class)->get('default');
+        $this->assertSame(1, $editor->getBlockRepository()->count());
     }
     
     public function testEditAction()
