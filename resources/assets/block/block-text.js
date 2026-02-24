@@ -30,6 +30,11 @@ events.listen('editor.blur', (e, editor) => {
         const blockEditor = blockEditors.get(editorId);
         const block = blockEditor.getBlock(blockId);
 
+        // FIX: block may not exist yet
+        if (!block) {
+            return;
+        }
+        
         block.block.translation[block.block.locale] = editor.code();
         
         fetch(blockEditor.config.updateUrl, {
