@@ -141,6 +141,11 @@ class Options implements OptionsInterface
                     'warning' => 'background-warning',
                     'error' => 'background-error',
                     'highlight' => 'background-highlight',
+                    'gray-100' => 'background-gray-100',
+                    'gray-300' => 'background-gray-300',
+                    'gray-500' => 'background-gray-500',
+                    'gray-700' => 'background-gray-700',
+                    'gray-900' => 'background-gray-900',
                 ],
                 'text' => [
                     'white' => 'text-white',
@@ -152,6 +157,11 @@ class Options implements OptionsInterface
                     'warning' => 'text-warning',
                     'error' => 'text-error',
                     'highlight' => 'text-highlight',
+                    'gray-100' => 'text-gray-100',
+                    'gray-300' => 'text-gray-300',
+                    'gray-500' => 'text-gray-500',
+                    'gray-700' => 'text-gray-700',
+                    'gray-900' => 'text-gray-900',
                 ],
             ],
         ];
