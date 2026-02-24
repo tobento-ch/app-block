@@ -19,7 +19,11 @@ $form = $view->form();
         <?php
         foreach($positions as $i => $position) {
             $blocks = $blocksByPosition[$position] ?? [];
-            echo '<div>'.$view->esc($position).'</div>';
+
+            if ($title = $field->getPositionTitle($position)) {
+                echo '<div>'.$view->esc($title).'</div>';
+            }
+            
             echo '<div'.(new Attributes($attributes))->add('class', 'content mt-xs mb-m').'>';
             echo $editor->render(
                 id: $field->name().':'.$position,
