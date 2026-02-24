@@ -57,6 +57,11 @@ class Color implements OptionInterface
                     'warning' => ['class' => 'background-warning'],
                     'error' => ['class' => 'background-error'],
                     'highlight' => ['class' => 'background-highlight'],
+                    'gray-100' => ['class' => 'background-gray-100'],
+                    'gray-300' => ['class' => 'background-gray-300'],
+                    'gray-500' => ['class' => 'background-gray-500'],
+                    'gray-700' => ['class' => 'background-gray-700'],
+                    'gray-900' => ['class' => 'background-gray-900'],
                 ]);
         }
         
@@ -75,6 +80,11 @@ class Color implements OptionInterface
                     'warning' => ['class' => 'background-warning'],
                     'error' => ['class' => 'background-error'],
                     'highlight' => ['class' => 'background-highlight'],
+                    'gray-100' => ['class' => 'background-gray-100'],
+                    'gray-300' => ['class' => 'background-gray-300'],
+                    'gray-500' => ['class' => 'background-gray-500'],
+                    'gray-700' => ['class' => 'background-gray-700'],
+                    'gray-900' => ['class' => 'background-gray-900'],
                 ]);
         }
     }
@@ -97,6 +107,11 @@ class Color implements OptionInterface
             'warning' => $action->trans('warning'),
             'error' => $action->trans('error'),
             'highlight' => $action->trans('highlight'),
+            'gray-100' => $action->trans('gray :weight', [':weight' => '100']),
+            'gray-300' => $action->trans('gray :weight', [':weight' => '300']),
+            'gray-500' => $action->trans('gray :weight', [':weight' => '500']),
+            'gray-700' => $action->trans('gray :weight', [':weight' => '700']),
+            'gray-900' => $action->trans('gray :weight', [':weight' => '900']),
         ];
     }
 }
