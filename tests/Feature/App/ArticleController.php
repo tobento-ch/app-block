@@ -48,13 +48,14 @@ class ArticleController extends AbstractCrudController
     {
         return [
             new Field\PrimaryId('id'),
-            new Field\Text('title'),
+            new Field\Text('title')->validate('htmlclean'),
             new Field\Slug('slug')->fromField('title'),
             new BlockEditor('blocks'),
             new BlockResourceEditor('resource_blocks')
                 ->editable(true)
                 ->storable(true)
                 ->blockPositions('resource.header', 'resource', 'footer')
+                ->positionTitle(fn(string $pos): null|string => sprintf('Position: %s', $pos))
                 ->resourceGroup('main'),
         ];
     }
@@ -76,6 +77,7 @@ class ArticleController extends AbstractCrudController
             new Action\Store(),
             new Action\Edit('Edit Article'),
             new Action\Update(),
+            new Action\Copy('Copy Article'),
             new Action\Delete(),
         ];
     }
