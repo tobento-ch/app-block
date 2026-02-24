@@ -18,6 +18,7 @@ use Tobento\App\Block\BlockEntity;
 use Tobento\App\Block\BlockEntityInterface;
 use Tobento\App\Block\BlockFactoryInterface;
 use Tobento\App\Block\BlockInterface;
+use Tobento\App\Block\ConfiguratorAwareInterface;
 use Tobento\App\Block\ConfiguratorInterface;
 use Tobento\App\Block\Exception\BlockCreateException;
 use Tobento\Service\Autowire\Autowire;
@@ -27,7 +28,7 @@ use Throwable;
 /**
  * BlockFactory
  */
-class BlockFactory implements BlockFactoryInterface
+class BlockFactory implements BlockFactoryInterface, ConfiguratorAwareInterface
 {
     /**
      * @var null|string
@@ -61,6 +62,28 @@ class BlockFactory implements BlockFactoryInterface
         }
         
         $this->autowire = new Autowire($container);
+    }
+    
+    /**
+     * Sets the configurator.
+     *
+     * @param ConfiguratorInterface $configurator
+     * @return static $this
+     */
+    public function setConfigurator(ConfiguratorInterface $configurator): static
+    {
+        $this->configurator = $configurator;
+        return $this;
+    }
+    
+    /**
+     * Returns the configurator.
+     *
+     * @return null|ConfiguratorInterface
+     */
+    public function configurator(): null|ConfiguratorInterface
+    {
+        return $this->configurator;
     }
     
     /**

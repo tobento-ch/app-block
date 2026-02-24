@@ -18,6 +18,7 @@ use Tobento\App\Block\BlockEntityFactory;
 use Tobento\App\Block\BlockFactoryInterface;
 use Tobento\App\Block\BlockRepositoryInterface;
 use Tobento\App\Block\BlockStorageRepository;
+use Tobento\App\Block\ConfiguratorAwareInterface;
 use Tobento\App\Block\ConfiguratorInterface;
 use Tobento\App\Block\EditableBlockInterface;
 use Tobento\App\Block\EditableBlocks;
@@ -255,7 +256,11 @@ class EditorFactory implements EditorFactoryInterface
     {
         $new = clone $this;
         $new->configurator = $configurator;
-        $new->blockFactory = $new->createBlockFactory();
+        
+        if ($new->blockFactory instanceof ConfiguratorAwareInterface) {
+            $new->blockFactory->setConfigurator($configurator);
+        }
+        
         return $new;
     }
     
