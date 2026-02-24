@@ -56,8 +56,8 @@ return [
             EditableOptionsInterface $editableOptions,
         ): EditorInterface {
             
-            if ($areaLanguages->has('frontend')) {
-                $factory = $factory->withLanguages($areaLanguages->get('frontend'));
+            if ($areaLanguages->has('resources')) {
+                $factory = $factory->withLanguages($areaLanguages->get('resources'));
             }
             
             $factory->addEditableBlocks([
@@ -86,8 +86,8 @@ return [
             AreaLanguagesInterface $areaLanguages
         ): EditorInterface {
             
-            if ($areaLanguages->has('frontend')) {
-                $factory = $factory->withLanguages($areaLanguages->get('frontend'));
+            if ($areaLanguages->has('resources')) {
+                $factory = $factory->withLanguages($areaLanguages->get('resources'));
             }
             
             $factory = $factory->addEditableBlocks([
