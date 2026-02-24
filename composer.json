@@ -1,6 +1,6 @@
 {
     "name": "tobento/app-block",
-    "version": "2.0.2",
+    "version": "2.0.3",
     "type": "library",
     "description": "App block editor.",
     "keywords": [
@@ -29,6 +29,7 @@
         "tobento/app-http": "^2.0",
         "tobento/app-migration": "^2.0",
         "tobento/app-view": "^2.0",
+        "tobento/app-logging": "^2.0",
         "tobento/app-user": "^2.0"
     },  
     "require-dev": {
