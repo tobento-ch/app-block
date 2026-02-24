@@ -9,7 +9,7 @@ $attributes->add('class', ['block', 'block-persons']);
             <?php if (!empty($person['image'])) { ?>
                 <?= $view->picture(
                     path: $person['image'],
-                    resource: 'uploads',
+                    resource: 'uploads-public',
                     definition: $pictureDefinition,
                     queue: $generateImagesInBackground,
                 )->imgAttr('alt', $person['name'] ?? $person['image']) ?>

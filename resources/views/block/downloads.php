@@ -16,7 +16,7 @@ $attributes->add('class', ['block', 'block-downloads', 'cards']);
                 <?php if (!empty($file->raw('image'))) { ?>
                     <div class="max-width-s"><?= $view->picture(
                         path: $file->raw('image'),
-                        resource: 'uploads',
+                        resource: 'uploads-public',
                         definition: $pictureDefinition,
                         queue: $generateImagesInBackground,
                     )->imgAttr('alt', $file->get(name: 'name', default: $f->name()))->imgAttr('loading', 'lazy') ?></div>

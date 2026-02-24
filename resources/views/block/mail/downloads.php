@@ -14,7 +14,7 @@ $attributes->add('class', ['block', 'block-downloads']);
             <?php if (!empty($file->raw('image'))) { ?>
                 <?= $view->picture(
                     path: $file->raw('image'),
-                    resource: 'uploads',
+                    resource: 'uploads-public',
                     definition: $pictureDefinition,
                     queue: $generateImagesInBackground,
                 )->imgAttr('alt', $file->get(name: 'name', default: $f->name()))->imgAttr('loading', 'lazy') ?>
