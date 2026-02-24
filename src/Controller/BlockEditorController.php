@@ -71,8 +71,9 @@ class BlockEditorController extends AbstractCrudController
         RequesterInterface $requester,
         protected TranslatorInterface $translator,
         protected RouterInterface $router,
+        $editorName = '',
     ) {
-        $editorName = $requester->input()->get('editor', '');
+        $editorName = $requester->input()->get('editor', $editorName);
 
         if (! $editors->has($editorName)) {
             throw new HttpException(
@@ -274,6 +275,9 @@ class BlockEditorController extends AbstractCrudController
         if (is_null($action)) {
             throw new ActionNotFoundException(actionName: 'store');
         }
+
+        $editableBlock = $this->editor()->getEditableBlocks()->get($blockType);
+        $block = $editableBlock->toFields($block, $action);
         
         $request = $requester->request()->withParsedBody($block);
         $requester = new Requester($request);
@@ -284,7 +288,7 @@ class BlockEditorController extends AbstractCrudController
         $action->locales($this->editor()->locales());
         $entity = $this->createEntityFromArray($block);
         $action->setEntity($entity);
-        
+                
         // Handle input:
         $action->setInput(new Input(
             array_replace_recursive($requester->input()->all(), $requester->request()->getUploadedFiles())
@@ -296,9 +300,9 @@ class BlockEditorController extends AbstractCrudController
         }
         
         $fields = $action->fields()->creatable();
-        
+
         $fields = $this->editor()->getConfigurator()->configureActionFields(action: $action, fields: $fields);
-        
+
         $action->setFields($fields);
         
         // Process action:
