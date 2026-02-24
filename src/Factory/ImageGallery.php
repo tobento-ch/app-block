@@ -19,7 +19,7 @@ use Tobento\App\Block\BlockEntityInterface;
 use Tobento\App\Block\BlockFactoryInterface;
 use Tobento\App\Block\BlockInterface;
 use Tobento\App\Block\Exception\BlockCreateException;
-use Tobento\App\Media\Picture\PictureGeneratorInterface;
+use Tobento\Service\Picture\Generator\PictureGeneratorInterface;
 use Tobento\Service\View\ViewInterface;
 
 /**
