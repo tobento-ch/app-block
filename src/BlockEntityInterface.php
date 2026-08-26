@@ -40,6 +40,13 @@ interface BlockEntityInterface
     public function status(): string;
     
     /**
+     * Returns the editor name.
+     *
+     * @return string
+     */
+    public function editor(): string;
+
+    /**
      * Sets the locale.
      *
      * @param string $locale
@@ -68,6 +75,13 @@ interface BlockEntityInterface
      * @return array<string, string>
      */
     public function localeFallbacks(): array;
+    
+    /**
+     * Returns the owner value.
+     *
+     * @return null|string
+     */
+    public function owner(): null|string;
     
     /**
      * Returns the resource id.
@@ -141,7 +155,7 @@ interface BlockEntityInterface
     /**
      * Object to array.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function toArray(): array;
 }
