@@ -38,7 +38,8 @@ class BlockEntity implements BlockEntityInterface
      */
     public function id(): int
     {
-        return (int)$this->get('id');
+        $value = $this->get('id');
+        return is_numeric($value) ? (int)$value : 0;
     }
     
     /**
@@ -48,7 +49,8 @@ class BlockEntity implements BlockEntityInterface
      */
     public function type(): string
     {
-        return (string)$this->get('type');
+        $value = $this->get('type');
+        return is_string($value) ? $value : '';
     }
     
     /**
@@ -58,7 +60,19 @@ class BlockEntity implements BlockEntityInterface
      */
     public function status(): string
     {
-        return (string)$this->get('status');
+        $value = $this->get('status');
+        return is_string($value) ? $value : '';
+    }
+    
+    /**
+     * Returns the editor name.
+     *
+     * @return string
+     */
+    public function editor(): string
+    {
+        $value = $this->get('editor');
+        return is_string($value) ? $value : '';
     }
 
     /**
@@ -80,7 +94,8 @@ class BlockEntity implements BlockEntityInterface
      */
     public function locale(): string
     {
-        return (string)$this->get('locale');
+        $value = $this->get('locale');
+        return is_string($value) ? $value : '';
     }
     
     /**
@@ -102,7 +117,20 @@ class BlockEntity implements BlockEntityInterface
      */
     public function localeFallbacks(): array
     {
-        return $this->get('locale_fallbacks', []);
+        $value = $this->get('locale_fallbacks', []);
+        return is_array($value) ? $value : [];
+    }
+    
+    /**
+     * Returns the owner value.
+     *
+     * @return null|string
+     */
+    public function owner(): null|string
+    {
+        $owner = $this->get('owner');
+
+        return is_null($owner) || is_string($owner) ? $owner : null;
     }
     
     /**
@@ -148,7 +176,8 @@ class BlockEntity implements BlockEntityInterface
      */
     public function sortorder(): int
     {
-        return (int)$this->get('sortorder', 0);
+        $value = $this->get('sortorder');
+        return is_numeric($value) ? (int)$value : 0;
     }
     
     /**
@@ -170,7 +199,8 @@ class BlockEntity implements BlockEntityInterface
      */
     public function editable(): bool
     {
-        return (bool)$this->get('editable', true);
+        $value = $this->get('editable');
+        return is_bool($value) ? $value : true;
     }
 
     /**
@@ -234,10 +264,10 @@ class BlockEntity implements BlockEntityInterface
     /**
      * Object to array.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function toArray(): array
     {
-        return (new Collection($this->attributes))->toArray();
+        return new Collection($this->attributes)->toArray();
     }
 }
