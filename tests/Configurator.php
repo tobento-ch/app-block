@@ -79,6 +79,21 @@ class Configurator implements ConfiguratorInterface
     }
     
     /**
+     * Configure reorder block.
+     *
+     * Called before a block's sortorder is updated.
+     * Allows configurators to validate or deny reorder operations.
+     *
+     * @param BlockEntityInterface $entity
+     * @return BlockEntityInterface
+     * @throws HttpException
+     */
+    public function configureReorderBlock(BlockEntityInterface $entity): BlockEntityInterface
+    {
+        throw new HttpException(statusCode: 403, message: 'blocks restricted');
+    }
+    
+    /**
      * Configure create block.
      *
      * @param array<string, mixed> $block
