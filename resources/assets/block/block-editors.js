@@ -148,15 +148,33 @@ const blockEditors = (function(window, document) {
             });
         }
         moveUp() {
-            if (this.el.previousElementSibling) {
-                this.el.parentNode.insertBefore(this.el, this.el.previousElementSibling);
-                editors.get(this.editorId).reorderBlocks();
+            const parent = this.el.parentNode;
+            const oldOrder = Array.from(parent.children);
+            const prev = this.el.previousElementSibling;
+
+            if (prev) {
+                parent.insertBefore(this.el, prev);
+
+                editors.get(this.editorId).reorderBlocks().then(result => {
+                    if (result.status !== 200) {
+                        oldOrder.forEach(child => parent.appendChild(child));
+                    }
+                });
             }
         }
         moveDown() {
-            if (this.el.nextElementSibling && this.el.nextElementSibling.hasAttribute('data-block')) {
-                this.el.parentNode.insertBefore(this.el.nextElementSibling, this.el);
-                editors.get(this.editorId).reorderBlocks();
+            const parent = this.el.parentNode;
+            const oldOrder = Array.from(parent.children);
+            const next = this.el.nextElementSibling;
+
+            if (next && next.hasAttribute('data-block')) {
+                parent.insertBefore(next, this.el);
+
+                editors.get(this.editorId).reorderBlocks().then(result => {
+                    if (result.status !== 200) {
+                        oldOrder.forEach(child => parent.appendChild(child));
+                    }
+                });
             }
         }
         getToolbar() {
@@ -184,6 +202,8 @@ const blockEditors = (function(window, document) {
                 modal.listeners = {};
             });
             
+            modal.open();
+
             fetch(editor.config.editUrl, {
                 method: 'POST',
                 headers: {
@@ -193,15 +213,52 @@ const blockEditors = (function(window, document) {
                 },
                 body: JSON.stringify({editor: editor.name, block: this.block})
             })
-            .then(response => response.text())
+            .then(response => {
+                return response.clone().json()
+                    .then(json => {
+                        if (!response.ok) {
+                            modal.close();
+
+                            notifier.send({
+                                status: 'error',
+                                text: json.message || 'Unknown error'
+                            });
+
+                            return null;
+                        }
+
+                        return response.text();
+                    })
+                    .catch(() => {
+                        if (!response.ok) {
+                            return response.text().then(text => {
+                                modal.close();
+
+                                notifier.send({
+                                    status: 'error',
+                                    text: text
+                                });
+
+                                return null;
+                            });
+                        }
+
+                        return response.text();
+                    });
+            })
             .then(string => {
+                if (string === null) {
+                    return;
+                }
+
+                const modal = modals.get('block-editor-' + this.editorId);
                 const modalBody = modal.modalEl.querySelector('.modal-body');
+
                 modalBody.innerHTML = string;
                 modals.register();
+
                 editor.fire('block.edit.loaded', [this, editor]);
             });
-            
-            modal.open();
         }
         save(saved = null) {
             const editor = editors.get(this.editorId);
@@ -588,17 +645,17 @@ const blockEditors = (function(window, document) {
                 }
             });
         }
-        reorderBlocks() {
+        async reorderBlocks() {
             const blocks = [];
             let i = 1;
-            
+
             this.el.querySelectorAll('[data-block-id]').forEach(el => {
                 const block = this.blocks[el.getAttribute('data-block-id')];
                 block.block.sortorder = i++;
                 blocks.push(block.block);
             });
-            
-            fetch(this.config.reorderUrl, {
+
+            const response = await fetch(this.config.reorderUrl, {
                 method: 'POST',
                 headers: {
                     "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
@@ -606,19 +663,26 @@ const blockEditors = (function(window, document) {
                     "Accept": "application/json"
                 },
                 body: JSON.stringify({editor: this.name, blocks: blocks})
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status !== 200) {
-                    notifier.send({
-                        status: 'error',
-                        text: data.message,
-                    });
-                } else {
-                    this.fire('blocks.reordered', [blocks, this]);
-                }
             });
-        }        
+
+            const data = await response.json();
+
+            if (data.status !== 200) {
+                notifier.send({
+                    status: 'error',
+                    text: data.message,
+                });
+
+                return {
+                    status: data.status,
+                    message: data.message,
+                };
+            }
+
+            this.fire('blocks.reordered', [blocks, this]);
+
+            return { status: 200 };
+        }
         deleteBlock(block) {
             delete this.blocks[block.id];
             
