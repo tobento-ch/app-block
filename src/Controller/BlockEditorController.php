@@ -16,6 +16,7 @@ namespace Tobento\App\Block\Controller;
 use JsonException;
 use Psr\Clock\ClockInterface;
 use Psr\Http\Message\ResponseInterface;
+use Tobento\App\Block\BlockEntity;
 use Tobento\App\Block\EditorInterface;
 use Tobento\App\Block\EditorsInterface;
 use Tobento\App\Crud\AbstractCrudController;
@@ -174,6 +175,11 @@ class BlockEditorController extends AbstractCrudController
             ->group('hidden')
             ->editable(false)
             ->value($this->editor()->name());
+        yield new Field\Text('owner')
+            ->group('hidden')
+            ->type('hidden')
+            ->value($action->getInput()->get('owner', $action->entity()->get('owner', '')))
+            ->validate('string|htmlclean|maxLen:100');
         yield new Field\Value(name: 'resource_id')
             ->group('hidden')
             ->editable(true)
@@ -616,20 +622,56 @@ class BlockEditorController extends AbstractCrudController
         ResponserInterface $responser,
     ): ResponseInterface {
         $blocks = $requester->input()->get('blocks', []);
+
+        // Collect all IDs first
+        $ids = [];
+        foreach ($blocks as $block) {
+            $blockId = $block['id'] ?? null;
+            if (is_numeric($blockId)) {
+                $ids[] = (int)$blockId;
+            }
+        }
+
+        // Load all entities in ONE call
+        $entities = [];
+        foreach ($this->repository()->findByIds(...$ids) as $entity) {
+            $entities[$entity->id()] = $entity;
+        }
         
-        foreach($blocks as $block) {
+        $configurator = $this->editor()->getConfigurator();
+
+        foreach ($blocks as $block) {
             $blockId = $block['id'] ?? null;
             $sortorder = $block['sortorder'] ?? null;
-            
+
             if (!is_numeric($blockId) || !is_numeric($sortorder)) {
                 continue;
             }
+
+            $blockId = (int)$blockId;
+
+            // Skip missing entities
+            if (!isset($entities[$blockId])) {
+                continue;
+            }
+
+            $entity = $entities[$blockId];
             
-            $this->repository()->updateById(id: (int)$blockId, attributes: [
-                'sortorder' => $sortorder,
+            // Inject new sortorder
+            $entity = new BlockEntity([
+                ...((array)$entity->toArray()),
+                'sortorder' => (int)$sortorder,
             ]);
+            
+            $entity = $configurator->configureReorderBlock($entity);
+
+            // Persist final sortorder
+            $this->repository()->updateById(
+                id: $blockId,
+                attributes: ['sortorder' => $entity->sortorder()],
+            );
         }
-        
+
         return $responser->json([
             'status' => 200,
         ]);
