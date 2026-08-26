@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Tobento\App\Block\Test\Feature;
 
 use Tobento\App\AppInterface;
+use Tobento\App\Block\Crud\Field\BlockEditor;
 use Tobento\App\Block\EditorsInterface;
 
 class CrudBlockEditorTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
@@ -255,5 +256,13 @@ class CrudBlockEditorTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
         $block = $editor->getBlockRepository()->findById(1);;
         
         $this->assertSame('pending', $block->status());
+    }
+    
+    public function testEditorStoresBlocksOwner()
+    {
+        $field = new BlockEditor('blocks');
+        $field->editor(name: 'default', owner: 'articles');
+
+        $this->assertSame('articles', $field->getBlocksOwner());
     }
 }
