@@ -35,6 +35,7 @@ class BlockStorageRepository extends StorageRepository implements BlockRepositor
             new Column\Id(),
             new Column\Text('type'),
             new Column\Text('editor')->type(length: 100, nullable: false),
+            new Column\Text('owner')->type(length: 100),
             new Column\Text('resource_id'),
             new Column\Text('resource_group'),
             new Column\Text('status')->type(length: 100),
