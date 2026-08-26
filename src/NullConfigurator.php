@@ -60,6 +60,21 @@ class NullConfigurator implements ConfiguratorInterface
     }
     
     /**
+     * Configure reorder block.
+     *
+     * Called before a block's sortorder is updated.
+     * Allows configurators to validate or deny reorder operations.
+     *
+     * @param BlockEntityInterface $entity
+     * @return BlockEntityInterface
+     * @throws HttpException
+     */
+    public function configureReorderBlock(BlockEntityInterface $entity): BlockEntityInterface
+    {
+        return $entity;
+    }
+    
+    /**
      * Configure create block.
      *
      * @param array<string, mixed> $block
