@@ -155,6 +155,38 @@ class ConfiguratorTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
         $http->response()->assertStatus(403);
     }
     
+    public function testReorderActionUsesConfigurator()
+    {
+        $http = $this->fakeHttp();
+
+        $http->request(
+            method: 'POST',
+            uri: 'block-editor/reorder-blocks',
+            headers: ['Accept' => 'application/json'],
+        )->body([
+            'editor' => 'default',
+            'blocks' => [
+                ['id' => 1, 'sortorder' => 3],
+            ],
+        ]);
+
+        $app = $this->bootingApp();
+
+        // Create block (same as AJAX create)
+        $editor = $app->get(EditorsInterface::class)->get('default');
+        $editor->getBlockRepository()->create([
+            'editor' => 'default',
+            'type' => 'text',
+            'position' => 'resource',
+            'resource_id' => 'articles:1',
+            'status' => 'pending',
+            'translation' => ['en' => 'Text'],
+        ]);
+
+        // Expect configurator to block reorder
+        $http->response()->assertStatus(403);
+    }
+
     public function testAddNewBlockUsesConfigurator()
     {
         $http = $this->fakeHttp();
