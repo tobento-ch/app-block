@@ -41,6 +41,9 @@ Editing blocks is kept simple having clients in minds. Furthermore, blocks use C
         - [Layout Option](#layout-option)
         - [Margin And Padding Option](#margin-and-padding-option)
     - [Configurator](#configurator)
+    - [Available Configurators](#available-configurators)
+        - [Null Configurator](#null-configurator)
+        - [Owner Configurator](#owner-configurator)
     - [Performance Notes](#performance-notes)
     - [Deleting Generated Pictures](#deleting-generated-pictures)
     - [Console](#console)
@@ -290,8 +293,34 @@ You may use the ```BlockEditor::class``` field to easily integrate a block edito
 ```php
 use Tobento\App\Block\Crud\Field\BlockEditor;
 
-new BlockEditor('blocks')->editor(name: 'default');
+new BlockEditor('blocks')->editor(
+    name: 'default',
+    owner: 'articles', // or null
+);
 ```
+
+### What the `owner` parameter does
+
+The `owner` identifies **which CRUD resource** the blocks belong to.  
+It is stored on each block entity and used by owner-aware configurators implementing:
+
+```php
+use Tobento\App\Block\OwnerConfiguratorInterface;
+
+interface OwnerConfiguratorInterface
+{
+    public function owns(BlockEntityInterface $entity): bool;
+}
+```
+
+This allows:
+
+- filtering blocks by owner  
+- enforcing ACL rules  
+- restricting block types per owner  
+- isolating blocks between different CRUD resources
+
+See also: **[Owner Configurator](#owner-configurator)** for detailed ownership rules and configurator delegation.
 
 **Workflow**
 
@@ -957,6 +986,21 @@ class Configurator implements ConfiguratorInterface
     }
     
     /**
+     * Configure reorder block.
+     *
+     * Called before a block's sortorder is updated.
+     * Allows configurators to validate or deny reorder operations.
+     *
+     * @param BlockEntityInterface $entity
+     * @return BlockEntityInterface
+     * @throws HttpException
+     */
+    public function configureReorderBlock(BlockEntityInterface $entity): BlockEntityInterface
+    {
+        return $entity;
+    }
+    
+    /**
      * Configure create block.
      *
      * @param array<string, mixed> $block
@@ -1009,6 +1053,227 @@ In the [Block Config](#block-config) you can add the configurator globally for a
     \Tobento\App\Block\ConfiguratorInterface::class => Configurator::class,
 ],
 ```
+
+If you want to apply configurator logic **based on block ownership**, see  
+**[Owner Configurator](#owner-configurator)** for owner-aware configurators and ownership delegation.
+
+## Available Configurators
+
+### Null Configurator
+
+A configurator that performs no changes.  
+Useful as a default or fallback configurator.
+
+```php
+use Tobento\App\Block\NullConfigurator;
+
+class NullConfigurator implements ConfiguratorInterface
+{
+    public function configureEditableBlocks(string $for, EditableBlocksInterface $blocks, array $options): EditableBlocksInterface
+    {
+        return $blocks;
+    }
+
+    public function configureEditableBlockButtons(array $buttons, BlockEntityInterface $entity): array
+    {
+        return $buttons;
+    }
+
+    public function configureActionFields(ActionInterface $action, FieldsInterface $fields): FieldsInterface
+    {
+        return $fields;
+    }
+
+    public function configureReorderBlock(BlockEntityInterface $entity): BlockEntityInterface
+    {
+        return $entity;
+    }
+    
+    public function configureCreateBlock(array $block): array
+    {
+        return $block;
+    }
+
+    public function configureCreateBlockFromEntity(BlockEntityInterface $entity): BlockEntityInterface
+    {
+        return $entity;
+    }
+}
+```
+
+### Owner Configurator
+
+Owner-aware configurators allow you to apply configurator logic **only** to
+blocks that belong to a specific owner. They work through a **delegation
+composite** called `OwnerConfigurator`, which forwards configuration calls
+to the **first configurator that claims ownership** of a block entity.
+
+#### Delegating OwnerConfigurator (composite)
+
+```php
+use Tobento\App\Block\ConfiguratorInterface;
+use Tobento\App\Block\OwnerConfiguratorInterface;
+use Tobento\App\Block\BlockEntity;
+use Tobento\App\Crud\Action\ActionInterface;
+use Tobento\App\Crud\Field\FieldsInterface;
+use Tobento\App\Http\Exception\HttpException;
+
+class OwnerConfigurator implements ConfiguratorInterface
+{
+    protected array $configurators = [];
+
+    public function registerConfigurator(ConfiguratorInterface $configurator): static
+    {
+        $this->configurators[] = $configurator;
+        return $this;
+    }
+
+    public function configureActionFields(ActionInterface $action, FieldsInterface $fields): FieldsInterface
+    {
+        $entity = new BlockEntity($action->entity()->toArray());
+
+        foreach ($this->configurators as $configurator) {
+            if ($configurator instanceof OwnerConfiguratorInterface && $configurator->owns($entity)) {
+                return $configurator->configureActionFields($action, $fields);
+            }
+        }
+
+        // Deny by default: no registered configurator claimed this entity.
+        throw new HttpException(403, trans('Access denied.'));
+    }
+
+    // Other configure* methods delegate in the same way...
+}
+```
+
+Only the configurator whose `owns()` method returns `true` handles the
+block. If none does, the block is rejected outright - there is no
+permissive fallback.
+
+#### OwnerConfiguratorInterface
+
+```php
+use Tobento\App\Block\OwnerConfiguratorInterface;
+
+interface OwnerConfiguratorInterface
+{
+    /**
+     * Returns true if the configurator owns the block entity.
+     */
+    public function owns(BlockEntityInterface $entity): bool;
+}
+```
+
+This enables:
+
+- filtering blocks by owner
+- enforcing ACL rules
+- restricting block types per owner
+- isolating blocks between different CRUD resources
+
+#### Two distinct ownership signals
+
+There are **two distinct ownership signals**, each serving a different
+integration scenario.
+
+##### 1. Dynamic / resource-resolved ownership
+
+Used by the [Block Views Editor Middleware](https://github.com/tobento-ch/app-block#block-views-editor-middleware)
+integration. Applies to blocks rendered **inline on a resource page** -
+articles, products, categories, any resource resolved per request. The
+owning resource is **not knowable statically**; the same integration point
+may serve an article on one request and a product on the next. Ownership is
+resolved **per request** using `resource_id` (e.g. `"articles:123"`) or
+`position` (for non-resource blocks like header/footer).
+
+```php
+public function owns(BlockEntityInterface $entity): bool
+{
+    if ($entity->editor() !== 'default') {
+        return false;
+    }
+    $resourceIdRaw = $entity->resourceId();
+    [$resourceKey, ] = array_pad(explode(':', $resourceIdRaw), 2, null);
+    return $resourceKey === $this->resourceKey;
+}
+```
+
+```php
+public function owns(BlockEntityInterface $entity): bool
+{
+    if ($entity->editor() !== 'default') {
+        return false;
+    }
+    $resourceIdRaw = $entity->resourceId();
+    if (! empty($resourceIdRaw)) {
+        return false; // resource-bound, not ours
+    }
+    $position = $entity->get('position', '');
+    return $position !== '' && $position !== 'resource';
+}
+```
+
+##### 2. Static / declared ownership
+
+Used by the [Crud Editor Field](https://github.com/tobento-ch/app-block#crud-editor-field)
+integration. The owner is **known at the moment the field is declared** -
+fixed, predictable, independent of routing or slugs.
+
+```php
+yield new BlockEditor(name: 'blocks', label: 'Blocks')
+    ->editor(name: 'mail', owner: 'newsletter');
+```
+
+```php
+public function owns(BlockEntityInterface $entity): bool
+{
+    if ($entity->editor() !== 'mail') {
+        return false;
+    }
+    if (! empty($entity->resourceId())) {
+        return false; // never claim resource-bound blocks, regardless of owner()
+    }
+    return $entity->owner() === 'newsletter';
+}
+```
+
+#### Rule of thumb
+
+- If the owner can **only be known per request** (resolved via routing,
+  slug, `resource_id`, or dynamic position): use **dynamic ownership**.
+- If the owner is **fixed at the point the field is declared in code**: use
+  **static ownership**.
+
+Do not force one signal to answer the other's question - both mechanisms
+coexist and serve different integration layers.
+
+#### Guard against ambiguous or conflicting signals
+
+Block entities are ultimately populated from client-submitted data. A
+malformed or tampered payload could in principle carry both a `resource_id`
+**and** an `owner` on the same entity - e.g. a request crafted against a
+static editor's endpoint that also injects a `resource_id`.
+
+**Every `owns()` implementation must check `editor()` as a baseline scope**,
+in addition to whichever signal (resource-based or owner-based) it actually
+uses. This is what prevents cross-editor leakage - not whether editors
+happen to share one `OwnerConfigurator` instance or use separate ones.
+Static owner configurators must additionally reject any entity carrying a
+`resource_id`, regardless of what `owner()` reports.
+
+**Return `false`, never throw, from inside `owns()`.** The composite's
+existing fail-closed default already rejects any entity nothing claims -
+reuse that single rejection path rather than duplicating exception-throwing
+logic across every configurator. Throwing from within `owns()` also risks
+firing before the *correct* configurator gets a chance to evaluate the
+entity, since configurators are checked in registration order.
+
+Sharing a single `OwnerConfigurator` instance across multiple editors is a
+reasonable simplicity convention (one place to review the full list of
+registered configurators), but it is **not**, by itself, what makes
+ownership resolution safe - the `editor()` scope check inside each
+configurator is the actual safeguard, and is required whether or not
+editors share one composite instance.
 
 ## Performance Notes
 
