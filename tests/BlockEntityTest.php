@@ -27,84 +27,111 @@ class BlockEntityTest extends TestCase
     
     public function testIdMethod()
     {
-        $this->assertSame(0, (new BlockEntity([]))->id());
-        $this->assertSame(3, (new BlockEntity(['id' => 3]))->id());
-        $this->assertSame(3, (new BlockEntity(['id' => '3']))->id());
+        $this->assertSame(0, new BlockEntity([])->id());
+        $this->assertSame(3, new BlockEntity(['id' => 3])->id());
+        $this->assertSame(3, new BlockEntity(['id' => '3'])->id());
+        $this->assertSame(0, new BlockEntity(['id' => []])->id());
     }
     
     public function testTypeMethod()
     {
-        $this->assertSame('', (new BlockEntity([]))->type());
-        $this->assertSame('foo', (new BlockEntity(['type' => 'foo']))->type());
+        $this->assertSame('', new BlockEntity([])->type());
+        $this->assertSame('foo', new BlockEntity(['type' => 'foo'])->type());
+        $this->assertSame('', new BlockEntity(['type' => []])->type());
     }
     
     public function testStatusMethod()
     {
-        $this->assertSame('', (new BlockEntity([]))->status());
-        $this->assertSame('foo', (new BlockEntity(['status' => 'foo']))->status());
+        $this->assertSame('', new BlockEntity([])->status());
+        $this->assertSame('foo', new BlockEntity(['status' => 'foo'])->status());
+        $this->assertSame('', new BlockEntity(['status' => []])->status());
+    }
+    
+    public function testEditorMethod()
+    {
+        $this->assertSame('', new BlockEntity([])->editor());
+        $this->assertSame('foo', new BlockEntity(['editor' => 'foo'])->editor());
+        $this->assertSame('', new BlockEntity(['editor' => []])->editor());
     }
     
     public function testLocaleMethods()
     {
-        $this->assertSame('', (new BlockEntity([]))->locale());
-        $this->assertSame('de', (new BlockEntity(['locale' => 'de']))->locale());
-        $this->assertSame('fr', (new BlockEntity(['locale' => 'de']))->setLocale('fr')->locale());
+        $this->assertSame('', new BlockEntity([])->locale());
+        $this->assertSame('de', new BlockEntity(['locale' => 'de'])->locale());
+        $this->assertSame('', new BlockEntity(['locale' => []])->locale());
+        $this->assertSame('fr', new BlockEntity(['locale' => 'de'])->setLocale('fr')->locale());
     }
     
     public function testLocaleFallbacksMethods()
     {
-        $this->assertSame([], (new BlockEntity([]))->localeFallbacks());
-        $this->assertSame(['de' => 'en'], (new BlockEntity(['locale_fallbacks' => ['de' => 'en']]))->localeFallbacks());
-        $this->assertSame(['fr' => 'en'], (new BlockEntity(['locale_fallbacks' => ['de' => 'en']]))->setLocaleFallbacks(['fr' => 'en'])->localeFallbacks());
+        $this->assertSame([], new BlockEntity([])->localeFallbacks());
+        $this->assertSame(['de' => 'en'], new BlockEntity(['locale_fallbacks' => ['de' => 'en']])->localeFallbacks());
+        $this->assertSame(['fr' => 'en'], new BlockEntity(['locale_fallbacks' => ['de' => 'en']])->setLocaleFallbacks(['fr' => 'en'])->localeFallbacks());
+        $this->assertSame([], new BlockEntity(['locale_fallbacks' => 'invalid'])->localeFallbacks());
+    }
+    
+    public function testOwnerMethod()
+    {
+        $this->assertSame(null, new BlockEntity([])->owner());
+        $this->assertSame('foo', new BlockEntity(['owner' => 'foo'])->owner());
+        $this->assertSame(null, new BlockEntity(['owner' => null])->owner());
+        $this->assertSame(null, new BlockEntity(['owner' => 125])->owner());
+        $this->assertSame(null, new BlockEntity(['owner' => []])->owner());
     }
     
     public function testResourceIdMethod()
     {
-        $this->assertSame(null, (new BlockEntity([]))->resourceId());
-        $this->assertSame('foo', (new BlockEntity(['resource_id' => 'foo']))->resourceId());
-        $this->assertSame(null, (new BlockEntity(['resource_id' => null]))->resourceId());
-        $this->assertSame(null, (new BlockEntity(['resource_id' => 125]))->resourceId());
+        $this->assertSame(null, new BlockEntity([])->resourceId());
+        $this->assertSame('foo', new BlockEntity(['resource_id' => 'foo'])->resourceId());
+        $this->assertSame(null, new BlockEntity(['resource_id' => null])->resourceId());
+        $this->assertSame(null, new BlockEntity(['resource_id' => 125])->resourceId());
+        $this->assertSame(null, new BlockEntity(['resource_id' => []])->resourceId());
     }
     
     public function testResourceGroupMethod()
     {
-        $this->assertSame(null, (new BlockEntity([]))->resourceGroup());
-        $this->assertSame('foo', (new BlockEntity(['resource_group' => 'foo']))->resourceGroup());
-        $this->assertSame(null, (new BlockEntity(['resource_group' => null]))->resourceGroup());
-        $this->assertSame(null, (new BlockEntity(['resource_group' => 234]))->resourceGroup());
+        $this->assertSame(null, new BlockEntity([])->resourceGroup());
+        $this->assertSame('foo', new BlockEntity(['resource_group' => 'foo'])->resourceGroup());
+        $this->assertSame(null, new BlockEntity(['resource_group' => null])->resourceGroup());
+        $this->assertSame(null, new BlockEntity(['resource_group' => 234])->resourceGroup());
+        $this->assertSame(null, new BlockEntity(['resource_group' => []])->resourceGroup());
     }
     
     public function testResourcePositionMethod()
     {
-        $this->assertSame(null, (new BlockEntity([]))->position());
-        $this->assertSame('foo', (new BlockEntity(['position' => 'foo']))->position());
-        $this->assertSame(null, (new BlockEntity(['position' => null]))->position());
-        $this->assertSame(null, (new BlockEntity(['position' => 234]))->position());
+        $this->assertSame(null, new BlockEntity([])->position());
+        $this->assertSame('foo', new BlockEntity(['position' => 'foo'])->position());
+        $this->assertSame(null, new BlockEntity(['position' => null])->position());
+        $this->assertSame(null, new BlockEntity(['position' => 234])->position());
+        $this->assertSame(null, new BlockEntity(['position' => []])->position());
     }
     
     public function testSortorderMethod()
     {
-        $this->assertSame(0, (new BlockEntity([]))->sortorder());
-        $this->assertSame(0, (new BlockEntity(['sortorder' => 'foo']))->sortorder());
-        $this->assertSame(0, (new BlockEntity(['sortorder' => null]))->sortorder());
-        $this->assertSame(234, (new BlockEntity(['sortorder' => 234]))->sortorder());
+        $this->assertSame(0, new BlockEntity([])->sortorder());
+        $this->assertSame(0, new BlockEntity(['sortorder' => 'foo'])->sortorder());
+        $this->assertSame(0, new BlockEntity(['sortorder' => null])->sortorder());
+        $this->assertSame(234, new BlockEntity(['sortorder' => 234])->sortorder());
+        $this->assertSame(0, new BlockEntity(['sortorder' => []])->sortorder());
     }
     
     public function testEditableMethods()
     {
-        $this->assertSame(true, (new BlockEntity([]))->editable());
-        $this->assertSame(true, (new BlockEntity(['editable' => true]))->editable());
-        $this->assertSame(false, (new BlockEntity(['editable' => false]))->editable());
-        $this->assertSame(true, (new BlockEntity(['editable' => false]))->setEditable(true)->editable());
-        $this->assertSame(true, (new BlockEntity(['editable' => 234]))->editable());
+        $this->assertSame(true, new BlockEntity([])->editable());
+        $this->assertSame(true, new BlockEntity(['editable' => true])->editable());
+        $this->assertSame(false, new BlockEntity(['editable' => false])->editable());
+        $this->assertSame(true, new BlockEntity(['editable' => false])->setEditable(true)->editable());
+        $this->assertSame(true, new BlockEntity(['editable' => 234])->editable());
+        $this->assertSame(true, new BlockEntity(['editable' => []])->editable());
     }
     
     public function testOptionsMethod()
     {
-        $this->assertSame([], (new BlockEntity([]))->options());
-        $this->assertSame([], (new BlockEntity(['options' => 'foo']))->options());
-        $this->assertSame([], (new BlockEntity(['options' => null]))->options());
-        $this->assertSame(['foo' => 'bar'], (new BlockEntity(['options' => ['foo' => 'bar']]))->options());
+        $this->assertSame([], new BlockEntity([])->options());
+        $this->assertSame([], new BlockEntity(['options' => 'foo'])->options());
+        $this->assertSame([], new BlockEntity(['options' => null])->options());
+        $this->assertSame(['foo' => 'bar'], new BlockEntity(['options' => ['foo' => 'bar']])->options());
+        $this->assertSame([], new BlockEntity(['options' => 'invalid'])->options());
     }
     
     public function testGetMethod()
