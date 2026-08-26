@@ -39,6 +39,11 @@ class BlockEditor extends AbstractField
     protected string $editorName = 'default';
     
     /**
+     * @var null|string
+     */
+    protected null|string $blocksOwner = null;    
+    
+    /**
      * Create a new BlockEditor.
      *
      * @param string $name
@@ -61,14 +66,16 @@ class BlockEditor extends AbstractField
     }
     
     /**
-     * Sets the editor.
+     * Sets the editor name and optional owner.
      *
      * @param string $name
+     * @param null|string $owner
      * @return static $this
      */
-    public function editor(string $name): static
+    public function editor(string $name, null|string $owner = null): static
     {
         $this->editorName = $name;
+        $this->blocksOwner = $owner;
         return $this;
     }
     
@@ -80,6 +87,16 @@ class BlockEditor extends AbstractField
     public function getEditorName(): string
     {
         return $this->editorName;
+    }
+
+    /**
+     * Returns the blocks owner.
+     *
+     * @return null|string
+     */
+    public function getBlocksOwner(): null|string
+    {
+        return $this->blocksOwner;
     }
 
     /**
@@ -133,6 +150,7 @@ class BlockEditor extends AbstractField
                 'actionName' => $action->name(),
                 'attributes' => $attributes,
                 'editor' => $editors->get($field->getEditorName()),
+                'owner' => $field->getBlocksOwner(),
                 'blocks' => $blocks,
             ],
         ));
@@ -171,6 +189,7 @@ class BlockEditor extends AbstractField
                 'actionName' => $action->name(),
                 'attributes' => $attributes,
                 'editor' => $editors->get($field->getEditorName()),
+                'owner' => $field->getBlocksOwner(),
                 'blocks' => $blocks,
             ],
         ));
@@ -277,6 +296,7 @@ class BlockEditor extends AbstractField
                 'actionName' => $action->name(),
                 'attributes' => $attributes,
                 'editor' => $editor,
+                'owner' => $field->getBlocksOwner(),
                 'blocks' => $blocks,
             ],
         ));
