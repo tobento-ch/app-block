@@ -23,6 +23,7 @@ $form = $view->form();
                 options: [
                     'storeBlocksToInput' => $form->nameToArray($field->name()),
                     'displayAsTextarea' => true,
+                    'owner' => $field->getBlocksOwner(),
                 ]
             ) ?>
         </div>

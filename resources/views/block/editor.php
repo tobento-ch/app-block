@@ -85,6 +85,7 @@ $attributes = new Attributes([
                             'resource_id' => $options['resource_id'] ?? null,
                             'resource_group' => $options['resource_group'] ?? null,
                             'position' => $options['position'] ?? null,
+                            'owner' => $options['owner'] ?? null,
                         ]
                     ),
                 ]);
