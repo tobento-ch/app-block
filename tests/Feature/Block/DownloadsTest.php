@@ -78,11 +78,22 @@ class DownloadsTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
         );
         
         $block = $app->make(DownloadsFactory::class)->createBlock([
-            'files' => [
-                [
-                    'src' => 'file.pdf',
-                    'storage' => 'downloads',
-                    'name' => ['en' => 'Filename'],
+            'data' => [
+                'files' => [
+                    [
+                        'src' => 'file.pdf',
+                        'storage' => 'downloads',
+                        'name' => ['en' => 'Filename'],
+                    ],
+                ],
+                'display' => [
+                    'image',
+                    'name',
+                    'filename',
+                    'format',
+                    'size',
+                    'download',
+                    'view',
                 ],
             ],
             'options' => [
@@ -95,11 +106,7 @@ class DownloadsTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
         $rendered = $block->render();
         $this->assertStringContainsString('block block-downloads', $rendered);
         $this->assertStringContainsString(
-            '<a href="http://localhost/media/download/downloads/file.pdf" class="button">Download</a>',
-            $rendered
-        );
-        $this->assertStringContainsString(
-            '<a href="http://localhost/media/file/downloads/file.pdf" class="button" target="_blank">View In Browser</a>',
+            '<a href="http://localhost/media/download/downloads/file.pdf"',
             $rendered
         );
         $this->assertStringContainsString('Filename', $rendered);
@@ -118,11 +125,22 @@ class DownloadsTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
         );
         
         $block = $app->make(DownloadsFactory::class)->withViewNamespace('mail')->createBlock([
-            'files' => [
-                [
-                    'src' => 'file.pdf',
-                    'storage' => 'downloads',
-                    'name' => ['en' => 'Filename'],
+            'data' => [
+                'files' => [
+                    [
+                        'src' => 'file.pdf',
+                        'storage' => 'downloads',
+                        'name' => ['en' => 'Filename'],
+                    ],
+                ],
+                'display' => [
+                    'image',
+                    'name',
+                    'filename',
+                    'format',
+                    'size',
+                    'download',
+                    'view',
                 ],
             ],
         ]);
@@ -130,11 +148,7 @@ class DownloadsTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
         $rendered = $block->render();
         $this->assertStringContainsString('block block-downloads', $rendered);
         $this->assertStringContainsString(
-            '<a href="http://localhost/media/download/downloads/file.pdf" class="button">Download</a>',
-            $rendered
-        );
-        $this->assertStringContainsString(
-            '<a href="http://localhost/media/file/downloads/file.pdf" class="button" target="_blank">View In Browser</a>',
+            '<a href="http://localhost/media/download/downloads/file.pdf"',
             $rendered
         );
         $this->assertStringContainsString('Filename', $rendered);

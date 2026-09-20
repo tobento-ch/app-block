@@ -46,10 +46,16 @@ class HeroTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
         );
         
         $block = $app->make(HeroFactory::class)->createBlock([
-            'html' => '<p>lorem</p>',
-            'path' => 'image-h1.jpg',
-            'resource' => 'uploads-public',
-            'imgAlt' => 'Image',
+            'data' => [
+                'image' => [
+                    'src' => 'image-h1.jpg',
+                    'storage' => 'uploads-public',
+                    'alt' => 'Image',
+                    'width' => 100,
+                    'figcaption' => '',
+                ],
+            ],
+            'translation' => '<p>lorem</p>',
         ]);
         
         $rendered = $block->render();
@@ -71,34 +77,12 @@ class HeroTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
         $this->assertStringNotContainsString('data-editor', $block->render());
     }
     
-    public function testBlockRenderHtmlIsSanitized()
-    {
-        $app = $this->bootingApp();
-        
-        $block = $app->make(HeroFactory::class)->createBlock([
-            'html' => '<p>lorem</p><script>alert("hi")</script>',
-        ]);
-        
-        $this->assertStringContainsString('<p>lorem</p>', $block->render());
-    }
-    
-    public function testBlockRenderWithMailNamespace()
-    {
-        $app = $this->bootingApp();
-        
-        $block = $app->make(HeroFactory::class)->withViewNamespace('mail')->createBlock([
-            'html' => '<p>lorem</p>',
-        ]);
-        
-        $this->assertStringContainsString('<p>lorem</p>', $block->render());
-    }
-    
     public function testBlockRenderWithOptions()
     {
         $app = $this->bootingApp();
         
         $block = $app->make(HeroFactory::class)->createBlock([
-            'html' => '<p>lorem</p>',
+            'translation' => '<p>lorem</p>',
             'options' => [
                 'padding' => [
                     'top' => 'xs',

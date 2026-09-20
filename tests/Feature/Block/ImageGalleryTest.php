@@ -46,11 +46,13 @@ class ImageGalleryTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
         );
         
         $block = $app->make(ImageGalleryFactory::class)->createBlock([
-            'images' => [
-                [
-                    'src' => 'image-g.jpg',
-                    'storage' => 'uploads-public',
-                    'alt' => ['en' => 'Image'],
+            'data' => [
+                'images' => [
+                    [
+                        'src' => 'image-g.jpg',
+                        'storage' => 'uploads-public',
+                        'alt' => ['en' => 'Image'],
+                    ],
                 ],
             ],
         ]);
@@ -75,11 +77,13 @@ class ImageGalleryTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
         );
         
         $block = $app->make(ImageGalleryFactory::class)->withViewNamespace('mail')->createBlock([
-            'images' => [
-                [
-                    'src' => 'image-g1.jpg',
-                    'storage' => 'uploads-public',
-                    'alt' => ['en' => 'Image'],
+            'data' => [
+                'images' => [
+                    [
+                        'src' => 'image-g1.jpg',
+                        'storage' => 'uploads-public',
+                        'alt' => ['en' => 'Image'],
+                    ],
                 ],
             ],
         ]);
@@ -92,6 +96,9 @@ class ImageGalleryTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
         $app = $this->bootingApp();
         
         $block = $app->make(ImageGalleryFactory::class)->createBlock([
+            'data' => [
+                'images' => [],
+            ],
             'options' => [
                 'padding' => [
                     'top' => 'xs',

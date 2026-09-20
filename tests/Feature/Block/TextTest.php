@@ -39,11 +39,14 @@ class TextTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
         $app = $this->bootingApp();
         
         $block = $app->make(TextFactory::class)->createBlock([
-            'html' => '<p>lorem</p>',
+            'translation' => '<p>lorem</p>',
         ]);
         
         $this->assertStringContainsString('<div class="block block-text content">', $block->render());
-        $this->assertStringContainsString('<div data-editor><p>lorem</p></div>', $block->render());
+        $this->assertStringContainsString(
+            '<div data-editor="" data-editor-field="translation" data-editor-translatable="1"><p>lorem</p></div>',
+            $block->render()
+        );
     }
     
     public function testBlockRenderUneditable()
@@ -51,7 +54,7 @@ class TextTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
         $app = $this->bootingApp();
         
         $block = $app->make(TextFactory::class)->createBlock([
-            'html' => '<p>lorem</p>',
+            'translation' => '<p>lorem</p>',
             'editable' => false,
         ]);
         
@@ -63,7 +66,7 @@ class TextTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
         $app = $this->bootingApp();
         
         $block = $app->make(TextFactory::class)->createBlock([
-            'html' => '<p>lorem</p><script>alert("hi")</script>',
+            'translation' => '<p>lorem</p><script>alert("hi")</script>',
             'editable' => false,
         ]);
         
@@ -75,11 +78,14 @@ class TextTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
         $app = $this->bootingApp();
         
         $block = $app->make(TextFactory::class)->withViewNamespace('mail')->createBlock([
-            'html' => '<p>lorem</p>',
+            'translation' => '<p>lorem</p>',
         ]);
         
         $this->assertStringContainsString('<div class="block block-text content">', $block->render());
-        $this->assertStringContainsString('<div data-editor><p>lorem</p></div>', $block->render());
+        $this->assertStringContainsString(
+            '<div data-editor="" data-editor-field="translation" data-editor-translatable="1"><p>lorem</p></div>',
+            $block->render()
+        );
     }
     
     public function testBlockRenderWithOptions()
@@ -87,7 +93,7 @@ class TextTest extends \Tobento\App\Crud\Testing\AbstractCrudTestCase
         $app = $this->bootingApp();
         
         $block = $app->make(TextFactory::class)->createBlock([
-            'html' => '<p>lorem</p>',
+            'translation' => '<p>lorem</p>',
             'options' => [
                 'padding' => [
                     'top' => 'xs',
