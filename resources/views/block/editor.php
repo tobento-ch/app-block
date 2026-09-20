@@ -20,7 +20,7 @@ $view->asset('assets/js-notifier/notifier.css');
 
 $view->asset('assets/block/crud-field-options.js')->attr('type', 'module');
 $view->asset('assets/block/crud-field-single-options.js')->attr('type', 'module');
-$view->asset('assets/block/block-text.js')->attr('type', 'module');
+$view->asset('assets/block/block-js-editors.js')->attr('type', 'module');
 $view->asset('assets/js-editor/editor.js')->attr('type', 'module');
 $view->asset('assets/js-editor/editor.css');
 

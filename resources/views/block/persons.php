@@ -3,31 +3,33 @@ $attributes = $block->options()->toTagAttributes();
 $attributes->add('class', ['block', 'block-persons', 'cards', 'cards-small']);
 ?>
 <div<?= $attributes ?>>
-    <?php foreach($block->persons() as $person) { ?>
+    <?php foreach ($block->items() as $item) { ?>
         <div class="card">
             <div class="card-body">
-            <?php if (!empty($person['image'])) { ?>
-                <?= $view->picture(
-                    path: $person['image'],
-                    resource: 'uploads-public',
-                    definition: $pictureDefinition,
-                    queue: $generateImagesInBackground,
-                )->imgAttr('alt', $person['name'] ?? $person['image'])->imgAttr('loading', 'lazy') ?>
-            <?php } ?>
+                <?php if ($item->has('image')) { ?>
+                    <?= $view->picture(
+                        path: $item->get('image')->value(),
+                        resource: 'uploads-public',
+                        definition: 'block-persons',
+                        queue: $generateImagesInBackground,
+                    )
+                    ->imgAttr('alt', $item->get('name')->value() ?? $item->get('image')->value())
+                    ->imgAttr('loading', 'lazy') ?>
+                <?php } ?>
             </div>
             <div class="card-foot">
                 <ul class="unstyled text-s">
-                <?php if (!empty($person['name'])) { ?>
-                    <li><?= $view->esc($person['name']) ?></li>
+                <?php if ($item->has('name')) { ?>
+                    <li><?= $block->renderField($item->get('name')) ?></li>
                 <?php } ?>
-                <?php if (!empty($person['position'])) { ?>
-                    <li><?= $view->esc($person['position']) ?></li>
+                <?php if ($item->has('position')) { ?>
+                    <li><?= $block->renderField($item->get('position')) ?></li>
                 <?php } ?>
-                <?php if (!empty($person['email'])) { ?>
-                    <li><a href="mailto:<?= $view->esc($person['email']) ?>"><?= $view->esc($person['email']) ?></a></li>
+                <?php if ($item->has('email')) { ?>
+                    <li><a href="mailto:<?= $block->renderField($item->get('email')) ?>"><?= $block->renderField($item->get('email')) ?></a></li>
                 <?php } ?>
-                <?php if (!empty($person['tel'])) { ?>
-                    <li><a href="tel:<?= $view->esc($person['tel']) ?>"><?= $view->esc($person['tel']) ?></a></li>
+                <?php if ($item->has('tel')) { ?>
+                    <li><a href="tel:<?= $block->renderField($item->get('tel')) ?>"><?= $block->renderField($item->get('tel')) ?></a></li>
                 <?php } ?>
                 </ul>
             </div>

@@ -1,9 +1,8 @@
 <?php
 $attributes = $block->options()->toTagAttributes();
 $attributes->add('class', ['block', 'block-image']);
+$fields = $block->fields();
+$image = $fields->get('data.image');
+//$image->withDefinition('block-image-fit');
 ?>
-<?php if ($figcaption) { ?>
-    <div<?= $attributes ?>><figure><?= $pictureTag ?><figcaption><?= $view->esc($figcaption) ?></figcaption></figure></div>
-<?php } else { ?>
-    <div<?= $attributes ?>><?= $pictureTag ?></div>
-<?php } ?>
+<div<?= $attributes ?>><?= $block->renderField($image) ?></div>

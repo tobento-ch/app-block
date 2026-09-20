@@ -3,30 +3,46 @@ $attributes = $block->options()->toTagAttributes();
 $attributes->add('class', ['block', 'block-persons']);
 ?>
 <div<?= $attributes ?>>
-    <?php foreach($block->persons() as $person) { ?>
+    <?php foreach ($block->items() as $item) { ?>
         <div class="mb-m">
             <div class="mb-xs">
-            <?php if (!empty($person['image'])) { ?>
-                <?= $view->picture(
-                    path: $person['image'],
-                    resource: 'uploads-public',
-                    definition: $pictureDefinition,
-                    queue: $generateImagesInBackground,
-                )->imgAttr('alt', $person['name'] ?? $person['image']) ?>
-            <?php } ?>
+                <?php if ($item->has('image')) { ?>
+                    <?= $view->picture(
+                        path: $item->get('image')->value(),
+                        resource: 'uploads-public',
+                        definition: 'block-persons',
+                        queue: $generateImagesInBackground,
+                    )
+                    ->imgAttr('alt', $item->get('name')->value() ?? $item->get('image')->value()) ?>
+                <?php } ?>
             </div>
             <div class="text-s">
-                <?php if (!empty($person['name'])) { ?>
-                    <div class="mb-xs text-l"><?= $view->esc($person['name']) ?></div>
+                <?php if ($item->has('name')) { ?>
+                    <div class="mb-xs text-l">
+                        <?= $block->renderField($item->get('name')) ?>
+                    </div>
                 <?php } ?>
-                <?php if (!empty($person['position'])) { ?>
-                    <div class="mb-xs"><?= $view->esc($person['position']) ?></div>
+
+                <?php if ($item->has('position')) { ?>
+                    <div class="mb-xs">
+                        <?= $block->renderField($item->get('position')) ?>
+                    </div>
                 <?php } ?>
-                <?php if (!empty($person['email'])) { ?>
-                    <div class="mb-xs"><a href="mailto:<?= $view->esc($person['email']) ?>"><?= $view->esc($person['email']) ?></a></div>
+
+                <?php if ($item->has('email')) { ?>
+                    <div class="mb-xs">
+                        <a href="mailto:<?= $block->renderField($item->get('email')) ?>">
+                            <?= $block->renderField($item->get('email')) ?>
+                        </a>
+                    </div>
                 <?php } ?>
-                <?php if (!empty($person['tel'])) { ?>
-                    <div class="mb-xs"><a href="tel:<?= $view->esc($person['tel']) ?>"><?= $view->esc($person['tel']) ?></a></div>
+
+                <?php if ($item->has('tel')) { ?>
+                    <div class="mb-xs">
+                        <a href="tel:<?= $block->renderField($item->get('tel')) ?>">
+                            <?= $block->renderField($item->get('tel')) ?>
+                        </a>
+                    </div>
                 <?php } ?>
             </div>
         </div>

@@ -4,31 +4,35 @@ $view->asset('assets/block/block-image-gallery.js')->attr('type', 'module');
 $attributes = $block->options()->toTagAttributes();
 $attributes->add('class', ['block', 'block-image-gallery', 'cards', 'cards-small']);
 $attributes->add('data-image-gallery', '');
+
+$fields = $block->fields();
+$filesField = $fields->get('data.images');
+$images = $filesField->files();
 ?>
 <div<?= $attributes ?>>
     <?php foreach($images as $image) { ?>
         <div class="thumbnail cursor-zoom-in" data-gallery="open">
         <?= $view->picture(
-            path: $image['src'] ?? '',
-            resource: $image['storage'] ?? '',
-            definition: $pictureDefinitionThumbnail,
+            path: $image->get('src', ''),
+            resource: $image->raw(name: 'storage', default: ''),
+            definition: $filesField->definition(name: 'thumbnail'),
             queue: $generateImagesInBackground,
-        )->imgAttr('alt', $image['alt'][$locale] ?? '')->imgAttr('loading', 'lazy') ?>
+        )->imgAttr('alt', $image->get('alt.'.$locale, ''))->imgAttr('loading', 'lazy') ?>
         </div>
     <?php } ?>
     <template data-images="">
         <?php foreach($images as $image) { ?>
             <div class="image mb-xl" data-image="">
                 <?php $pictureTag = $view->picture(
-                    path: $image['src'] ?? '',
-                    resource: $image['storage'] ?? '',
-                    definition: $pictureDefinition,
+                    path: $image->get('src', ''),
+                    resource: $image->raw(name: 'storage', default: ''),
+                    definition: $filesField->definition(name: 'large'),
                     queue: $generateImagesInBackground,
-                )->imgAttr('alt', $image['alt'][$locale] ?? '')->imgAttr('loading', 'lazy') ?>
-                <?php if (!empty($image['figcaption'][$locale])) { ?>
+                )->imgAttr('alt', $image->get('alt.'.$locale, ''))->imgAttr('loading', 'lazy') ?>
+                <?php if (!empty($image->get('figcaption.'.$locale, ''))) { ?>
                     <figure>
                         <?= $pictureTag ?>
-                        <figcaption class="text-m mt-xs"><?= $view->esc($image['figcaption'][$locale]) ?></figcaption>
+                        <figcaption class="text-m mt-xs"><?= $view->esc($image->get('figcaption.'.$locale, '')) ?></figcaption>
                     </figure>
                 <?php } else { ?>
                     <?= $pictureTag ?>
