@@ -89,7 +89,7 @@ class BlockFactoryTest extends TestCase
             'editable' => false,
         ]);
         
-        $this->assertInstanceof(Block\Text::class, $block);
+        $this->assertInstanceof(Block\Fields::class, $block);
     }
     
     public function testCreateBlockMethodThrowsBlockCreateExceptionIfBlockFactoryNotExists()
@@ -139,7 +139,7 @@ class BlockFactoryTest extends TestCase
             'editable' => false,
         ]));
         
-        $this->assertInstanceof(Block\Text::class, $block);
+        $this->assertInstanceof(Block\Fields::class, $block);
     }
     
     public function testCreateBlockFromEntityMethodThrowsBlockCreateExceptionIfBlockFactoryNotExists()
