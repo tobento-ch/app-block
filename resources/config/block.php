@@ -61,7 +61,16 @@ return [
             }
             
             $factory->addEditableBlocks([
-                'downloads' => Editable\Downloads::class,
+                'downloads' => new Editable\Downloads(
+                    options: $editableOptions->withOption(
+                        name: 'layout',
+                        option: new EditableOption\Layout(
+                            options: ['table' => 'Table'],
+                            emptyLabel: 'Cards',
+                        ),
+                    ),
+                ),
+                'faq' => Editable\Faq::class,
                 'hero' => Editable\Hero::class,
                 'image' => Editable\Image::class,
                 'image-gallery' => Editable\ImageGallery::class,
@@ -71,6 +80,7 @@ return [
             
             $factory->addBlockFactories([
                 'downloads' => [Factory\Downloads::class, 'generateImagesInBackground' => false],
+                'faq' => Factory\Faq::class,
                 'hero' => [Factory\Hero::class, 'generateImagesInBackground' => false],
                 'image' => [Factory\Image::class, 'generateImagesInBackground' => false],
                 'image-gallery' => [Factory\ImageGallery::class, 'generateImagesInBackground' => false],
@@ -83,7 +93,8 @@ return [
         
         'mail' => static function (
             MailEditorFactory $factory,
-            AreaLanguagesInterface $areaLanguages
+            AreaLanguagesInterface $areaLanguages,
+            EditableOptionsInterface $editableOptions,
         ): EditorInterface {
             
             if ($areaLanguages->has('resources')) {
@@ -91,7 +102,16 @@ return [
             }
             
             $factory = $factory->addEditableBlocks([
-                'downloads' => Editable\Downloads::class,
+                'downloads' => new Editable\Downloads(
+                    options: $editableOptions->withOption(
+                        name: 'layout',
+                        option: new EditableOption\Layout(
+                            options: ['table' => 'Table'],
+                            emptyLabel: 'Cards',
+                        ),
+                    ),
+                ),
+                'faq' => Editable\Faq::class,
                 'hero' => Editable\Hero::class,
                 'image' => Editable\Image::class,
                 'image-gallery' => Editable\ImageGallery::class,
@@ -101,6 +121,7 @@ return [
             
             $factory = $factory->addBlockFactories([
                 'downloads' => [Factory\Downloads::class, 'generateImagesInBackground' => false],
+                'faq' => Factory\Faq::class,
                 'hero' => [Factory\Hero::class, 'generateImagesInBackground' => false],
                 'image' => [Factory\Image::class, 'generateImagesInBackground' => false],
                 'image-gallery' => [Factory\ImageGallery::class, 'generateImagesInBackground' => false],
