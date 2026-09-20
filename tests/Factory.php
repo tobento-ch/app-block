@@ -19,15 +19,19 @@ use Tobento\App\Block\BlockRepositoryInterface;
 use Tobento\App\Block\BlockStorageRepository;
 use Tobento\App\Block\EditableBlocks;
 use Tobento\App\Block\EditableBlocksInterface;
-use Tobento\App\Media\Picture\PictureGeneratorInterface;
-use Tobento\App\Media\Picture\PictureRepositoryInterface;
 use Tobento\Service\Container\Container;
 use Tobento\Service\Dir\Dir;
 use Tobento\Service\Dir\Dirs;
 use Tobento\Service\Imager\ResourceInterface;
+use Tobento\Service\Picture\Generator\PictureGeneratorInterface;
+use Tobento\Service\Picture\Generator\PictureRepositoryInterface;
 use Tobento\Service\Picture\DefinitionInterface;
-use Tobento\Service\Picture\NullPictureTag;
+use Tobento\Service\Picture\PictureTag;
 use Tobento\Service\Picture\PictureTagInterface;
+use Tobento\Service\Repository\RepositoryInterface;
+use Tobento\Service\Repository\Storage\StorageRepository;
+use Tobento\Service\Repository\Storage\StorageEntityFactoryInterface;
+use Tobento\Service\Repository\Storage\Column\ColumnsInterface;
 use Tobento\Service\Routing\Constrainer\Constrainer;
 use Tobento\Service\Routing\MatchedRouteHandler;
 use Tobento\Service\Routing\RequestData;
@@ -39,6 +43,9 @@ use Tobento\Service\Routing\RouterInterface;
 use Tobento\Service\Routing\RouteResponseParser;
 use Tobento\Service\Routing\UrlGenerator;
 use Tobento\Service\Storage\InMemoryStorage;
+use Tobento\Service\Storage\StorageInterface;
+use Tobento\Service\Tag\Attributes;
+use Tobento\Service\Tag\Tag;
 use Tobento\Service\Translation;
 use Tobento\Service\View\Assets;
 use Tobento\Service\View\Data;
@@ -65,7 +72,11 @@ class Factory
         $view = new View(
             new PhpRenderer(
                 new Dirs(
+                    // Main app views
                     new Dir(realpath(__DIR__.'/../resources/views/')),
+
+                    // Test-only views
+                    new Dir(realpath(__DIR__.'/views/')),
                 )
             ),
             new Data(),
@@ -77,7 +88,13 @@ class Factory
         });
         
         $view->addMacro('sanitizeHtml', function(string $html) {
+            $html = preg_replace('#<script(.*?)>(.*?)</script>#is', '', $html);
             return $html;
+        });
+        
+        $view->addMacro('routeUrl', function(string $route, array $params) {
+            $query = http_build_query($params);
+            return $route.($query ? '?'.$query : '');
         });
         
         return $view;
@@ -111,8 +128,18 @@ class Factory
                 string|ResourceInterface $resource,
                 string|DefinitionInterface $definition,
                 bool $queue = true,
+                bool $allowPrivateStorage = false,
             ): PictureTagInterface {
-                return new NullPictureTag();
+                $picture = new PictureTag(
+                    new Tag(name: 'picture', attributes: new Attributes(['data-definition' => is_string($definition) ? $definition : 'def'])),
+                    new Tag(name: 'img', attributes: new Attributes([
+                        'src' => $path,
+                        'width' => '100',
+                        'height' => '50',
+                    ])),
+                );
+
+                return $picture;
             }
 
             public function regenerate(
@@ -120,8 +147,9 @@ class Factory
                 string|ResourceInterface $resource,
                 string|DefinitionInterface $definition,
                 bool $queue = true,
+                bool $allowPrivateStorage = false,
             ): PictureTagInterface {
-                return new NullPictureTag();
+                return $this->generate($path, $resource, $definition, $queue, $allowPrivateStorage);
             }
         };
     }
@@ -156,5 +184,29 @@ class Factory
             new Translation\MissingTranslationHandler(),
             'en',
         );
-    }    
+    }
+    
+    /**
+     * Create a new storage repository.
+     */
+    public static function createStorageRepository(
+        string $table,
+        iterable|ColumnsInterface $columns,
+        null|StorageInterface $storage = null,
+        null|StorageEntityFactoryInterface $entityFactory = null,
+    ): RepositoryInterface {
+        
+        if (is_null($storage)) {
+            $storage = new  InMemoryStorage(items: []);
+        }
+        
+        return new class(
+            $storage,
+            $table,
+            $columns,
+            $entityFactory,
+        ) extends StorageRepository {
+            //
+        };
+    }
 }
