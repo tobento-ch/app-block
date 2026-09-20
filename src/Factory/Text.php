@@ -10,105 +10,84 @@
  */
 
 declare(strict_types=1);
- 
+
 namespace Tobento\App\Block\Factory;
 
-use Tobento\App\Block\Block\Option\OptionsFactoryInterface;
-use Tobento\App\Block\Block;
-use Tobento\App\Block\BlockEntityInterface;
-use Tobento\App\Block\BlockFactoryInterface;
-use Tobento\App\Block\BlockInterface;
-use Tobento\App\Block\Exception\BlockCreateException;
-use Tobento\Service\View\ViewInterface;
-use Throwable;
+use Tobento\App\Block\Field;
+use Tobento\App\Block\FieldInterface;
 
 /**
- * Text
+ * Text Block Factory
  */
-final class Text implements BlockFactoryInterface
+class Text extends AbstractFields
 {
     /**
-     * Create a new Text instance.
+     * Returns the block type handled by this factory.
      *
-     * @param ViewInterface $view
-     * @param OptionsFactoryInterface $optionsFactory
-     * @param null|string $viewNamespace
-     */
-    public function __construct(
-        private ViewInterface $view,
-        private OptionsFactoryInterface $optionsFactory,
-        private null|string $viewNamespace = null,
-    ) {}
-
-    /**
-     * Returns a new instance with the specified view namespace.
+     * This value must match the type returned by the corresponding
+     * editable block (Editable\AbstractItems::type()) so the block
+     * manager can correctly pair editable configuration, hydration,
+     * and rendering.
      *
-     * @param null|string $namespace
-     * @return static
+     * @return string
      */
-    public function withViewNamespace(null|string $namespace): static
+    public function type(): string
     {
-        $new = clone $this;
-        $new->viewNamespace = $namespace;
-        return $new;
+        return 'text';
     }
     
     /**
-     * Returns the view namespace.
+     * Returns the mapping from CRUD/editor field types to
+     * renderable block field classes.
      *
-     * @return null|string
+     * @return iterable<string, class-string<FieldInterface>>
      */
-    public function viewNamespace(): null|string
+    protected function configureFieldMapping(): iterable
     {
-        return $this->viewNamespace;
+        return [
+            'translation' => Field\HtmlTextEditor::class,
+        ];
     }
     
     /**
-     * Create block.
+     * Returns the mapping from block field names to entity storage keys.
      *
-     * @param array<string, mixed> $block
-     * @return BlockInterface
-     * @throws BlockCreateException
+     * Example:
+     * [
+     *     'html'  => 'translation',
+     *     'image' => 'data.image',
+     * ]
+     *
+     * @return array<string, string>
      */
-    public function createBlock(array $block): BlockInterface
+    protected function configureEntityFieldMapping(): array
     {
-        $viewName = 'block/text-editable';
-        
-        if (($block['editable'] ?? true) === false) {
-            $viewName = 'block/text';
-        }
-        
-        $options = $this->optionsFactory->createOptions($block['options'] ?? []);
-        
-        $viewName = Helper::resolveViewName(
-            view: $this->view,
-            name: $viewName,
-            namespace: $this->viewNamespace(),
-            options: $options,
-        );
-        
-        return new Block\Text(
-            view: $this->view,
-            options: $options,
-            html: $block['html'] ?? '',
-            viewName: $viewName,
-        );
+        return [
+            'translation' => 'translation',
+        ];
     }
     
     /**
-     * Create block from entity.
+     * Returns the field names that are translatable.
      *
-     * @param BlockEntityInterface $entity
-     * @return BlockInterface
-     * @throws BlockCreateException
+     * @return array<int, string>
      */
-    public function createBlockFromEntity(BlockEntityInterface $entity): BlockInterface
+    protected function configureTranslatableFields(): array
     {
-        return $this->createBlock(block: [
-            'type' => $entity->type(),
-            'html' => $entity->localized('translation'),
-            'options' => $entity->options(),
-            'editable' => $entity->editable(),
-        ]);
+        return ['translation'];
+    }
+    
+    /**
+     * Returns the base view name for fields blocks.
+     *
+     * The returned name is used as the base identifier for template
+     * resolution. The final view name may be overridden by namespaces
+     * or block options through Helper::resolveViewName().
+     *
+     * @return string
+     */
+    public function viewName(): string
+    {
+        return 'block/text';
     }
 }
