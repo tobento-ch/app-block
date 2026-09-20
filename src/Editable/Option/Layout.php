@@ -28,10 +28,12 @@ class Layout implements OptionInterface
      *
      * @param array<string, string> $options
      * @param string $groupName
+     * @param string $emptyLabel
      */
     public function __construct(
         protected array $options,
         protected string $groupName = 'General',
+        protected string $emptyLabel = '---',
     ) {}
     
     /**
@@ -42,11 +44,15 @@ class Layout implements OptionInterface
      */
     public function configureFields(ActionInterface $action): iterable|FieldsInterface
     {
+        $emptyLabel = $this->emptyLabel === '---'
+            ? $this->emptyLabel
+            : $action->trans($this->emptyLabel);
+
         return [
             new Field\Select('options.layout', $action->trans('Layout'))
                 ->group($action->trans($this->groupName))
                 ->options($this->options($action))
-                ->emptyOption(value: 'default', label: '---'),
+                ->emptyOption(value: 'default', label: $emptyLabel),
         ];
     }
     
