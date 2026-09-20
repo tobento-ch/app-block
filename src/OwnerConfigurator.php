@@ -109,10 +109,10 @@ class OwnerConfigurator implements ConfiguratorInterface
         }
 
         $message = match ($action->name()) {
-            'store' => trans('You don\'t have permission to create this block.'),
-            'edit', 'update' => trans('You don\'t have permission to edit this block.'),
-            'delete' => trans('You don\'t have permission to delete this block.'),
-            default => trans('You don\'t have permission to access this block.'),
+            'store' => 'You don\'t have permission to create this block.',
+            'edit', 'update' => 'You don\'t have permission to edit this block.',
+            'delete' => 'You don\'t have permission to delete this block.',
+            default => 'You don\'t have permission to access this block.',
         };
         
         throw new HttpException(403, $message);
@@ -138,7 +138,7 @@ class OwnerConfigurator implements ConfiguratorInterface
 
         throw new HttpException(
             403,
-            trans('You don\'t have permission to reorder this block.')
+            'You don\'t have permission to reorder this block.'
         );
     }
 
