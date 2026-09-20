@@ -10,116 +10,97 @@
  */
 
 declare(strict_types=1);
- 
+
 namespace Tobento\App\Block\Factory;
 
-use Tobento\App\Block\Block\Option\OptionsFactoryInterface;
-use Tobento\App\Block\Block;
-use Tobento\App\Block\BlockEntityInterface;
-use Tobento\App\Block\BlockFactoryInterface;
-use Tobento\App\Block\BlockInterface;
-use Tobento\App\Block\Exception\BlockCreateException;
-use Tobento\App\Crud\Collection\Items;
-use Tobento\Service\View\ViewInterface;
+use Tobento\App\Block\Field;
+use Tobento\App\Block\FieldInterface;
 
 /**
- * Downloads
+ * Downloads Block Factory
  */
-class Downloads implements BlockFactoryInterface
+class Downloads extends AbstractFields
 {
     /**
-     * Create a new Downloads instance.
+     * Returns the block type handled by this factory.
      *
-     * @param ViewInterface $view
-     * @param OptionsFactoryInterface $optionsFactory
-     * @param null|string $viewNamespace
-     * @param bool $generateImagesInBackground
-     */
-    public function __construct(
-        protected ViewInterface $view,
-        protected OptionsFactoryInterface $optionsFactory,
-        protected null|string $viewNamespace = null,
-        protected bool $generateImagesInBackground = true,
-    ) {}
-    
-    /**
-     * Returns a new instance with the specified view namespace.
+     * This value must match the type returned by the corresponding
+     * editable block (Editable\AbstractItems::type()) so the block
+     * manager can correctly pair editable configuration, hydration,
+     * and rendering.
      *
-     * @param null|string $namespace
-     * @return static
+     * @return string
      */
-    public function withViewNamespace(null|string $namespace): static
+    public function type(): string
     {
-        $new = clone $this;
-        $new->viewNamespace = $namespace;
-        return $new;
+        return 'downloads';
     }
     
     /**
-     * Returns the view namespace.
+     * Returns the mapping from CRUD/editor field types to
+     * renderable block field classes.
      *
-     * @return null|string
+     * @return iterable<string, class-string<FieldInterface>>
      */
-    public function viewNamespace(): null|string
+    protected function configureFieldMapping(): iterable
     {
-        return $this->viewNamespace;
+        return [
+            'data.files' => Field\Files::class,
+            'data.display' => Field\Data::class,
+        ];
     }
     
     /**
-     * Create block.
+     * Returns the mapping from block field names to entity storage keys.
      *
-     * @param array<string, mixed> $block
-     * @return BlockInterface
-     * @throws BlockCreateException
+     * Example:
+     * [
+     *     'html'  => 'translation',
+     *     'image' => 'data.image',
+     * ]
+     *
+     * @return array<string, string>
      */
-    public function createBlock(array $block): BlockInterface
+    protected function configureEntityFieldMapping(): array
     {
-        $options = $this->optionsFactory->createOptions($block['options'] ?? []);
-        
-        $viewName = Helper::resolveViewName(
-            view: $this->view,
-            name: 'block/downloads',
-            namespace: $this->viewNamespace(),
-            options: $options,
-        );
-        
-        $files = $block['files'] ?? [];
-        
-        if (!is_array($files)) {
-            $files = [];
-        }
-        
-        $locale = $block['locale'] ?? 'en';
-        
-        return new Block\Downloads(
-            view: $this->view,
-            options: $options,
-            files: new Items(
-                items: $files,
-                locale: $locale,
-                localeFallbacks: $block['localeFallbacks'] ?? [],
-            ),
-            generateImagesInBackground: $this->generateImagesInBackground,
-            viewName: $viewName,
-        );
+        return [
+            'data.files' => 'data.files',
+            'data.display' => 'data.display',
+        ];
     }
     
     /**
-     * Create block from entity.
+     * Returns the field names that are translatable.
      *
-     * @param BlockEntityInterface $entity
-     * @return BlockInterface
-     * @throws BlockCreateException
+     * @return array<int, string>
      */
-    public function createBlockFromEntity(BlockEntityInterface $entity): BlockInterface
+    protected function configureTranslatableFields(): array
     {
-        return $this->createBlock(block: [
-            'type' => $entity->type(),
-            'options' => $entity->options(),
-            'files' => $entity->get('data.files', []),
-            'editable' => $entity->editable(),
-            'locale' => $entity->locale(),
-            'localeFallbacks' => $entity->localeFallbacks(),
-        ]);
+        return [];
+    }
+    
+    /**
+     * Returns picture definitions for image fields.
+     * Blocks without image fields simply return an empty array.
+     *
+     * @return array<string, string|array<string, string>> Field name to picture definition
+     */
+    protected function configureImageDefinitions(): array
+    {
+        return ['data.files' => 'block-downloads'];
+    }
+    
+    /**
+     * Returns the base view name for fields blocks.
+     *
+     * The returned name is used as the base identifier for template
+     * resolution. The final view name may be overridden by namespaces
+     * or block options through Helper::resolveViewName().
+     *
+     * @return string
+     */
+    public function viewName(): string
+    {
+        return 'block/downloads';
     }
 }
