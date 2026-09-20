@@ -10,102 +10,76 @@
  */
 
 declare(strict_types=1);
- 
+
 namespace Tobento\App\Block\Factory;
 
-use Tobento\App\Block\Block\Option\OptionsFactoryInterface;
-use Tobento\App\Block\Block;
-use Tobento\App\Block\BlockEntityInterface;
-use Tobento\App\Block\BlockFactoryInterface;
-use Tobento\App\Block\BlockInterface;
-use Tobento\App\Block\Exception\BlockCreateException;
-use Tobento\Service\View\ViewInterface;
-use Throwable;
+use Tobento\App\Block\Field;
+use Tobento\App\Block\FieldInterface;
 
 /**
- * Persons
+ * Persons Block Factory
  */
-class Persons implements BlockFactoryInterface
+class Persons extends AbstractItems
 {
     /**
-     * Create a new Persons instance.
+     * Returns the block type handled by this factory.
      *
-     * @param ViewInterface $view
-     * @param OptionsFactoryInterface $optionsFactory
-     * @param null|string $viewNamespace
-     * @param bool $generateImagesInBackground
-     */
-    public function __construct(
-        protected ViewInterface $view,
-        protected OptionsFactoryInterface $optionsFactory,
-        protected null|string $viewNamespace = null,
-        protected bool $generateImagesInBackground = true,
-    ) {}
-
-    /**
-     * Returns a new instance with the specified view namespace.
+     * This value must match the type returned by the corresponding
+     * editable block (Editable\AbstractItems::type()) so the block
+     * manager can correctly pair editable configuration, hydration,
+     * and rendering.
      *
-     * @param null|string $namespace
-     * @return static
+     * @return string
      */
-    public function withViewNamespace(null|string $namespace): static
+    public function type(): string
     {
-        $new = clone $this;
-        $new->viewNamespace = $namespace;
-        return $new;
+        return 'persons';
     }
     
     /**
-     * Returns the view namespace.
+     * Returns the mapping from CRUD/editor field types to
+     * renderable block field classes.
      *
-     * @return null|string
+     * @return iterable<string, class-string<FieldInterface>>
      */
-    public function viewNamespace(): null|string
+    protected function configureFieldMapping(): iterable
     {
-        return $this->viewNamespace;
+        return [
+            'name' => Field\Text::class,
+            'position' => Field\Text::class,
+            'email' => Field\Text::class,
+            'tel' => Field\Text::class,
+            'image' => Field\Text::class,
+        ];
     }
     
     /**
-     * Create block.
+     * Returns the field names that are translatable.
      *
-     * @param array<string, mixed> $block
-     * @return BlockInterface
-     * @throws BlockCreateException
+     * Example:
+     * [
+     *     'question',
+     *     'answer',
+     * ]
+     *
+     * @return array<int, string>
      */
-    public function createBlock(array $block): BlockInterface
+    protected function configureTranslatableFields(): array
     {
-        $options = $this->optionsFactory->createOptions($block['options'] ?? []);
-        
-        $viewName = Helper::resolveViewName(
-            view: $this->view,
-            name: 'block/persons',
-            namespace: $this->viewNamespace(),
-            options: $options,
-        );
-                
-        return new Block\Persons(
-            view: $this->view,
-            options: $options,
-            persons: $block['persons'] ?? [],
-            viewName: $viewName,
-            generateImagesInBackground: $this->generateImagesInBackground,
-        );
+        return [];
     }
     
     /**
-     * Create block from entity.
+     * Returns the base view name for item‑list blocks.
      *
-     * @param BlockEntityInterface $entity
-     * @return BlockInterface
-     * @throws BlockCreateException
+     * The returned name is used as the base identifier for template
+     * resolution. The final view name may be overridden by namespaces
+     * or block options through Helper::resolveViewName().
+     *
+     * @return string
      */
-    public function createBlockFromEntity(BlockEntityInterface $entity): BlockInterface
+    public function viewName(): string
     {
-        return $this->createBlock(block: [
-            'type' => $entity->type(),
-            'persons' => $entity->get('data.persons'),
-            'options' => $entity->options(),
-            'editable' => $entity->editable(),
-        ]);
+        return 'block/persons';
     }
 }
