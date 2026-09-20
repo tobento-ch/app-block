@@ -29,11 +29,18 @@ Editing blocks is kept simple having clients in minds. Furthermore, blocks use C
     - [Block Views Editor Middleware](#block-views-editor-middleware)
     - [Available Blocks](#available-blocks)
         - [Downloads Block](#downloads-block)
+        - [FAQ Block](#faq-block)
         - [Hero Block](#hero-block)
         - [Image Block](#image-block)
         - [Image Gallery Block](#image-gallery-block)
         - [Persons Block](#persons-block)
         - [Text Block](#text-block)
+    - [Creating Custom Blocks](#creating-custom-blocks)
+        - [Creating Blocks](#creating-blocks)
+        - [Using AbstractFields](#using-abstractfields)
+        - [Using AbstractItems](#using-abstractitems)
+        - [Using AbstractRepository](#using-abstractrepository)
+    - [Available Fields](#available-fields)
     - [Block Options](#block-options)
     - [Available Block Options](#available-block-options)
         - [Classes Option](#classes-option)
@@ -481,11 +488,12 @@ This block lets you add files to be displayed for download or be viewed in brows
 ```php
 use Tobento\App\Block\Editable;
 use Tobento\App\Block\EditorInterface;
-use Tobento\App\Block\Factory;
+use Tobento\App\Block\Editable\Option\OptionsInterface as EditableOptionsInterface;
 use Tobento\App\Block\Editor\EditorFactory;
+use Tobento\App\Block\Factory;
 
 'editors' => [
-    'default' => static function (EditorFactory $factory): EditorInterface {
+    'default' => static function (EditorFactory $factory, EditableOptionsInterface $editableOptions): EditorInterface {
         $factory->addEditableBlocks([
             'downloads' => Editable\Downloads::class,
             
@@ -499,6 +507,15 @@ use Tobento\App\Block\Editor\EditorFactory;
                 
                 // you may set the max number of files allowed:
                 maxNumberOfFiles: 50, // default
+                
+                // you may define editor options shown in the block settings panel:
+                options: $editableOptions->withOption(
+                    name: 'layout',
+                    option: new EditableOption\Layout(
+                        options: ['table' => 'Table'],
+                        emptyLabel: 'Cards',
+                    ),
+                ),
             ),
         ]);
 
@@ -558,6 +575,31 @@ Next, ensure that the `downloads` storage is included in the `supportedStorages`
 
 For more details, see [App Media](https://github.com/tobento-ch/app-media).
 
+### FAQ Block
+
+The FAQ block lets you create a list of questions and answers that can be displayed anywhere on your site. It is ideal for support pages, product information, or any section where structured Q&A content is needed.
+
+```php
+use Tobento\App\Block\Editable;
+use Tobento\App\Block\EditorInterface;
+use Tobento\App\Block\Editor\EditorFactory;
+use Tobento\App\Block\Factory;
+
+'editors' => [
+    'default' => static function (EditorFactory $factory): EditorInterface {
+        $factory->addEditableBlocks([
+            'faq' => Editable\Faq::class,
+        ]);
+
+        $factory->addBlockFactories([
+            'faq' => Factory\Faq::class,
+        ]);
+
+        return $factory->createEditor(name: 'default');
+    },
+],
+```
+
 ### Hero Block
 
 This block creates an editable text block using the [Js Editor](https://github.com/tobento-ch/js-editor) and lets you add an image to be displayed.
@@ -565,8 +607,8 @@ This block creates an editable text block using the [Js Editor](https://github.c
 ```php
 use Tobento\App\Block\Editable;
 use Tobento\App\Block\EditorInterface;
-use Tobento\App\Block\Factory;
 use Tobento\App\Block\Editor\EditorFactory;
+use Tobento\App\Block\Factory;
 
 'editors' => [
     'default' => static function (EditorFactory $factory): EditorInterface {
@@ -598,8 +640,8 @@ This block lets you add an image to be displayed.
 ```php
 use Tobento\App\Block\Editable;
 use Tobento\App\Block\EditorInterface;
-use Tobento\App\Block\Factory;
 use Tobento\App\Block\Editor\EditorFactory;
+use Tobento\App\Block\Factory;
 
 'editors' => [
     'default' => static function (EditorFactory $factory): EditorInterface {
@@ -631,8 +673,8 @@ This block lets you add multiple images to be displayed as a gallery. Clicking o
 ```php
 use Tobento\App\Block\Editable;
 use Tobento\App\Block\EditorInterface;
-use Tobento\App\Block\Factory;
 use Tobento\App\Block\Editor\EditorFactory;
+use Tobento\App\Block\Factory;
 
 'editors' => [
     'default' => static function (EditorFactory $factory): EditorInterface {
@@ -671,8 +713,8 @@ This block lets you add persons to be displayed. For instance, you add a team se
 ```php
 use Tobento\App\Block\Editable;
 use Tobento\App\Block\EditorInterface;
-use Tobento\App\Block\Factory;
 use Tobento\App\Block\Editor\EditorFactory;
+use Tobento\App\Block\Factory;
 
 'editors' => [
     'default' => static function (EditorFactory $factory): EditorInterface {
@@ -704,8 +746,8 @@ This block creates an editable text block using the [Js Editor](https://github.c
 ```php
 use Tobento\App\Block\Editable;
 use Tobento\App\Block\EditorInterface;
-use Tobento\App\Block\Factory;
 use Tobento\App\Block\Editor\EditorFactory;
+use Tobento\App\Block\Factory;
 
 'editors' => [
     'default' => static function (EditorFactory $factory): EditorInterface {
@@ -721,6 +763,1646 @@ use Tobento\App\Block\Editor\EditorFactory;
     },
 ],
 ```
+
+## Creating Custom Blocks
+
+### Creating Blocks
+
+This section explains how to create blocks manually without using helper
+abstractions such as [AbstractFields](#using-abstractfields), [AbstractItems](#using-abstractitems), or [AbstractRepository]((#using-abstractrepository)).  
+A block consists of three parts:
+
+1. **Editable Block** - defines the fields shown in the Block editor UI  
+2. **Block Factory** - hydrates the editable data into a renderable block
+3. **Block** - renders the final HTML output
+
+#### Creating Editable Block
+
+Editable blocks implement `EditableBlockInterface`.  
+They define:
+
+- the block title, description, and icon  
+- the default block data  
+- the editable CRUD fields  
+- how block data is mapped to fields (`toFields`)  
+
+Example:
+
+```php
+namespace Tobento\App\Block\Editable;
+
+use Tobento\App\Block\Editable\Option\OptionsInterface;
+use Tobento\App\Block\EditableBlockInterface;
+use Tobento\App\Crud\Action\ActionInterface;
+use Tobento\App\Crud\Field;
+use Tobento\App\Crud\Field\FieldInterface;
+use Tobento\App\Crud\Field\FieldsInterface;
+use function Tobento\App\Translation\trans;
+
+final class Text implements EditableBlockInterface
+{
+    public function __construct(
+        private OptionsInterface $options,
+    ) {}
+
+    public function title(): string
+    {
+        return trans('Text');
+    }
+
+    public function description(): string
+    {
+        return trans('Add a text section.');
+    }
+
+    public function icon(): string
+    {
+        return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" ...></svg>';
+    }
+
+    public function defaultBlock(): array
+    {
+        return ['type' => 'text', 'translation' => ['en' => '']];
+    }
+
+    public function configureFields(ActionInterface $action): iterable|FieldsInterface
+    {
+        return [
+            new Field\Textarea(name: 'translation', label: trans('Text'))
+                ->group(trans('Text'))
+                ->validate('string')
+                ->translatable(),
+            ...$this->options->configureFields($action, $this),
+        ];
+    }
+
+    public function toFields(array $block, ActionInterface $action): array
+    {
+        return $block;
+    }
+}
+```
+
+##### About `toFields()`
+
+`toFields()` prepares the stored block data so the editor fields receive the **correct input format**.
+
+For file fields (`Field\FileSource`), this matters because the editor must **not** get the stored `src` value. If `src` is present during an update, the validator thinks:
+
+- the user did not upload a file
+- but the field is required
+- **validation error: image is required**
+
+So for image blocks, `toFields()` must remove `src` on update:
+
+```php
+if ($action->name() === 'update') {
+    unset($block['data']['image']['src']);
+}
+```
+
+This ensures the editor keeps the existing file instead of treating the field as empty.
+
+On store (duplicate), the stored file format must be normalized:
+
+```php
+if ($action->name() === 'store') {
+    $block['data']['image'] = $this->normalizeFileSource($block['data']['image']);
+}
+```
+
+In short:
+
+- **update**: remove `src` to prevent image required validation errors
+- **store**: normalize to ensure duplicated blocks load correctly
+
+Simple blocks (like Text) don't need mapping, so they just return `$block`.
+
+#### Creating Block Factory
+
+The block factory transforms editable block data into a renderable block instance.  
+It implements `BlockFactoryInterface`.
+
+A factory decides:
+
+- which view to use (editable or default)
+- how options are created
+- how block data is mapped to the final block
+- how entities are converted into blocks
+
+Example:
+
+```php
+namespace Tobento\App\Block\Factory;
+
+use Tobento\App\Block\Block\Option\OptionsFactoryInterface;
+use Tobento\App\Block\Block;
+use Tobento\App\Block\BlockEntityInterface;
+use Tobento\App\Block\BlockFactoryInterface;
+use Tobento\App\Block\BlockInterface;
+use Tobento\App\Block\Exception\BlockCreateException;
+use Tobento\Service\View\ViewInterface;
+
+final class Text implements BlockFactoryInterface
+{
+    public function __construct(
+        private ViewInterface $view,
+        private OptionsFactoryInterface $optionsFactory,
+        private null|string $viewNamespace = null,
+    ) {}
+
+    public function withViewNamespace(null|string $namespace): static
+    {
+        $new = clone $this;
+        $new->viewNamespace = $namespace;
+        return $new;
+    }
+
+    public function viewNamespace(): null|string
+    {
+        return $this->viewNamespace;
+    }
+
+    public function createBlock(array $block): BlockInterface
+    {
+        $viewName = 'block/text-editable';
+
+        if (($block['editable'] ?? true) === false) {
+            $viewName = 'block/text';
+        }
+
+        $options = $this->optionsFactory->createOptions($block['options'] ?? []);
+
+        $viewName = Helper::resolveViewName(
+            view: $this->view,
+            name: $viewName,
+            namespace: $this->viewNamespace(),
+            options: $options,
+        );
+
+        return new Block\Text(
+            view: $this->view,
+            options: $options,
+            html: $block['html'] ?? '',
+            viewName: $viewName,
+        );
+    }
+
+    public function createBlockFromEntity(BlockEntityInterface $entity): BlockInterface
+    {
+        return $this->createBlock(block: [
+            'type' => $entity->type(),
+            'html' => $entity->localized('translation'),
+            'options' => $entity->options(),
+            'editable' => $entity->editable(),
+        ]);
+    }
+}
+```
+
+This factory:
+
+- selects the correct view (text-editable or text)
+- resolves view namespaces
+- creates block options
+- maps editable block data to the final block
+- supports entity hydration via `createBlockFromEntity()`
+
+##### About `createBlockFromEntity()`
+
+When loading a block from the repository, the factory must convert the stored
+entity values into the format expected by `createBlock()`.
+
+```php
+public function createBlockFromEntity(BlockEntityInterface $entity): BlockInterface
+{
+    return $this->createBlock(block: [
+        'type'     => $entity->type(),
+        'html'     => $entity->localized('translation'),
+        'options'  => $entity->options(),
+        'editable' => $entity->editable(),
+    ]);
+}
+```
+
+The important part is:
+
+```php
+$entity->localized('translation')
+```
+
+This returns the correct string for the current locale, regardless of how the value is stored internally.
+
+##### About `localized()`
+
+`localized()` ensures you always get a string for the active locale, even if the stored value is:
+
+- a plain string
+- a `StringTranslations` object
+- a JSON array of locales
+- missing or malformed
+
+Short behavior summary:
+
+```php
+use Tobento\Service\Repository\Storage\Attribute\StringTranslations;
+
+public function localized(string $name): string
+{
+    $value = $this->get($name);
+    $locale = $this->locale();
+
+    // stored as plain string: return directly
+    if (is_string($value)) {
+        return $value;
+    }
+
+    // stored as StringTranslations: use its getter
+    if ($value instanceof StringTranslations) {
+        return $value->get(locale: $locale);
+    }
+
+    // stored as array: return $value[$locale] if exists
+    if (is_array($value) && isset($value[$locale])) {
+        return $value[$locale];
+    }
+
+    // fallback: first available locale or empty string
+    return (string)($value[array_key_first($value)] ?? '');
+}
+```
+
+##### Why this matters
+
+Without `localized()`:
+
+- multilingual blocks would need manual locale handling
+- factories would need to check array formats themselves
+- blocks could break when translations are missing
+
+With `localized()`:
+
+- every block factory always receives a clean string
+- no matter how translations are stored
+- no matter which locale is active
+
+This keeps block factories simple and predictable.
+
+#### Creating Block (rendering)
+
+The final block implements `BlockInterface` and is responsible for producing HTML.  
+Your factory returns a block class such as `Block\Text`.
+
+Example:
+
+```php
+namespace Tobento\App\Block\Block;
+
+use Tobento\App\Block\Block\Option\OptionsInterface;
+use Tobento\App\Block\BlockInterface;
+use Tobento\Service\View\ViewInterface;
+
+class Text implements BlockInterface
+{
+    public function __construct(
+        protected ViewInterface $view,
+        protected OptionsInterface $options,
+        protected string $html,
+        protected null|string $viewName = null,
+    ) {}
+
+    public function render(): string
+    {
+        $view = $this->viewName ?: 'block/text';
+
+        return $this->view->render(view: $view, data: ['block' => $this]);
+    }
+
+    public function html(): string
+    {
+        return $this->html;
+    }
+
+    public function options(): OptionsInterface
+    {
+        return $this->options;
+    }
+}
+```
+
+**Example views:**
+
+`block/text`
+
+```php
+<?php
+$attributes = $block->options()->toTagAttributes();
+$attributes->add('class', ['block', 'block-text', 'content']);
+?>
+<div<?= $attributes ?>><?= $view->sanitizeHtml($block->html()) ?></div>
+```
+
+`block/text-editable`
+
+```php
+<?php
+$attributes = $block->options()->toTagAttributes();
+$attributes->add('class', ['block', 'block-text', 'content']);
+?>
+<div<?= $attributes ?>>
+    <div data-editor><?= $view->sanitizeHtml($block->html()) ?></div>
+</div>
+```
+
+##### Editable Views
+
+Editable views (e.g. `block/text-editable`) are only required when a block needs an **interactive editing interface** inside the block's edit-mode render.
+
+Examples include:
+
+- inline text editing
+- any interactive UI that must appear *inside* the block during editing  
+
+In these cases, the editable view wraps the block's content in an element that activates the editor, for example:
+
+```html
+<div data-editor>...</div>
+```
+
+Blocks that do not require such interactive editing do not need a separate editable view and can use the same view for both edit and default modes.
+
+#### Block Storage Columns
+
+Blocks may store their data in several different column types depending on their structure and translation requirements. The following columns are commonly used by block factories and block entities.
+
+##### `data` (Json)
+
+Stores structured block data such as configuration, items, or nested values.
+
+```php
+new Column\Json('data')
+```
+
+Use this column for:
+
+- repeatable items (e.g., FAQ items, gallery items)
+- block-specific configuration values
+- nested arrays or objects
+
+This column is ideal for blocks that require flexible, schema-less storage.
+
+##### `content` (Text)
+
+Stores raw text or HTML content.
+
+```php
+new Column\Text(name: 'content', type: 'text')
+```
+
+Use this column for:
+
+- Markdown converted to HTML
+- any non-translatable text content
+
+This column is not locale-aware. If you need translations, use `translation` or `translations`.
+
+##### `translation` (Translatable, string)
+
+Stores **one translatable string field** for the block.
+
+```php
+new Column\Translatable(name: 'translation', subtype: 'string')
+```
+
+Use this column when your block has a single main text value that should be localized. This is typically the block's primary text content (e.g. the text of a Text block, or the main text of a Hero block).
+
+Example stored structure:
+
+```json
+{
+    "translation": {
+        "en": "Hello",
+        "de": "Hallo"
+    }
+}
+```
+
+Blocks may still have additional translatable fields (e.g. image alt text), but those are stored inside the block's `data` column, not in `translation`.
+
+##### `translations` (Translatable, array)
+
+Stores multiple translatable fields grouped **by locale**.
+
+```php
+new Column\Translatable(name: 'translations', subtype: 'array')
+```
+
+Use this column when the block has several related translatable fields, such as:
+
+- hero blocks (title, subtitle)
+- card blocks (title, description)
+- multi-field text blocks
+
+Stored structure:
+
+```json
+{
+    "translations": {
+        "en": {
+            "title": "Welcome",
+            "subtitle": "Our mission"
+        },
+        "de": {
+            "title": "Willkommen",
+            "subtitle": "Unsere Mission"
+        }
+    }
+}
+```
+
+#### Summary
+
+| Column | Type | Purpose |
+|---|---|---|
+| `data` | JSON | Structured block data, items, configuration |
+| `content` | Text | Raw HTML/text, non-translatable content |
+| `translation` | Translatable string | Single translatable field |
+| `translations` | Translatable array | Multiple translatable fields grouped by locale |
+
+### Using AbstractFields
+
+#### Creating Editable Block
+
+Editable blocks based on `AbstractFields` are the simplest type of blocks.  
+They consist of a fixed set of CRUD fields that the editor displays and stores.  
+Blocks such as Hero, Image and Text are built using this base class.
+
+To create an editable block, extend `AbstractFields` and implement:
+
+- `type()` - the unique block identifier  
+- `title()` - the human-readable name shown in the editor  
+- `description()` - a short explanation for editors  
+- `icon()` - an SVG icon (HTML-escaped)  
+- `configureBlockFields()` - the CRUD fields used to edit the block  
+
+Below is a minimal example based on the built-in **Hero** block:
+
+```php
+declare(strict_types=1);
+
+namespace App\Block;
+
+use Tobento\App\Block\Editable\AbstractFields;
+use Tobento\App\Block\Editable\Option\OptionsInterface;
+use Tobento\App\Crud\Action\ActionInterface;
+use Tobento\App\Crud\Field;
+use Tobento\App\Crud\Field\FieldInterface;
+use Tobento\App\Crud\Field\FieldsInterface;
+use function Tobento\App\Translation\trans;
+
+class Hero extends AbstractFields
+{
+    public function __construct(
+        protected OptionsInterface $options,
+        protected array $pictureDefinitions = ['block-hero'],
+    ) {}
+
+    public function type(): string
+    {
+        return 'hero';
+    }
+
+    protected function configureBlockFields(ActionInterface $action): iterable|FieldsInterface
+    {
+        yield new Field\File(name: 'data.image', label: trans('Image'))
+            ->group(trans('Image'))
+            ->translatable()
+            ->fileSource(function(Field\FileSource $fs): void {
+                $fs->storage(name: 'uploads-public');
+                $fs->allowedExtensions('jpg', 'png', 'webp');
+                $fs->pictureEditor(template: 'default', definitions: $this->pictureDefinitions);
+            })
+            ->fields(
+                new Field\Text('alt', trans('Alternative Text'))
+                    ->validate('string|htmlclean')
+                    ->translatable(),
+            )
+            ->storeFilenameTo('alt');
+
+        yield new Field\Textarea(name: 'translation', label: trans('Text'))
+            ->group(trans('Text'))
+            ->validate('string')
+            ->translatable();
+    }
+
+    public function title(): string
+    {
+        return trans('Hero');
+    }
+
+    public function description(): string
+    {
+        return trans('A Hero section to get users attention, ideally with a call to action button.');
+    }
+
+    public function icon(): string
+    {
+        return '<svg ...></svg>';
+    }
+}
+```
+
+**Notes**
+
+- `configureBlockFields()` may yield any supported CRUD field type.
+- File fields are automatically normalized by `AbstractFields` during store and update.
+- Options (layout, classes, margin, etc.) are automatically appended via `$this->options->configureFields()`.
+- The block editor will render all editable fields returned by `configureFields()`.
+
+#### Creating Block Factory
+
+A block factory is responsible for transforming raw editable block data into renderable block field objects.  
+Factories based on `Tobento\App\Block\Factory\AbstractFields` hydrate the fields defined in the editable block and map them to the correct renderable field classes.
+
+To create a factory for an `AbstractFields`-based block:
+
+- extend `Tobento\App\Block\Factory\AbstractFields`
+- implement:
+  - `type()`  
+  - `configureFieldMapping()`  
+  - `configureEntityFieldMapping()`  
+  - `configureTranslatableFields()`  
+  - optionally: `configureImageDefinitions()`  
+  - optionally: `viewName()`  
+
+Below is the factory for the built-in **Hero** block:
+
+```php
+declare(strict_types=1);
+
+namespace Tobento\App\Block\Factory;
+
+use Tobento\App\Block\Field;
+use Tobento\App\Block\FieldInterface;
+
+class Hero extends AbstractFields
+{
+    public function type(): string
+    {
+        return 'hero';
+    }
+
+    protected function configureFieldMapping(): iterable
+    {
+        return [
+            'data.image'  => Field\Image::class,
+            'translation' => Field\HtmlTextEditor::class,
+        ];
+    }
+
+    protected function configureEntityFieldMapping(): array
+    {
+        return [
+            'data.image'  => 'data.image',
+            'translation' => 'translation',
+        ];
+    }
+
+    protected function configureTranslatableFields(): array
+    {
+        return [
+            'data.image.src',
+            'data.image.alt',
+            'data.image.figcaption',
+            'translation',
+        ];
+    }
+
+    protected function configureImageDefinitions(): array
+    {
+        return [
+            'data.image' => 'block-hero',
+        ];
+    }
+
+    public function viewName(): string
+    {
+        return 'block/hero';
+    }
+}
+```
+
+**Notes**
+
+- `configureFieldMapping()` maps editor field names to renderable field classes.
+- `configureEntityFieldMapping()` maps block field names to entity storage keys.
+- `configureTranslatableFields()` defines which fields support localization.
+- `configureImageDefinitions()` assigns picture definitions for image generation.
+- `viewName()` determines the base template used when rendering the block.
+
+For a complete overview of all renderable field classes that can be used in
+`configureFieldMapping()`, see the [Available Fields](#available-fields) section.
+
+#### Rendering Block
+
+Blocks created by `Tobento\App\Block\Factory\AbstractFields` are rendered using
+`Tobento\App\Block\Block\Fields`. This block represents a set of named
+`FieldInterface` instances and provides helpers for rendering them in both
+editable mode and default mode.
+
+Each field is responsible for generating its own HTML output. The `Fields` block
+coordinates *how* fields are rendered and provides a consistent API for views.
+
+**renderField()**
+
+The `renderField()` method automatically selects the correct rendering mode:
+
+- **editable mode** `FieldInterface::renderEditable()`  
+- **default mode** `FieldInterface::render()`  
+
+This allows views to remain simple:
+
+```php
+<?= $block->renderField($field) ?>
+```
+
+Views do not need to handle rendering mode themselves.  
+The field decides how to output its content based on the block's internal state.
+
+##### Default Fields View
+
+If no custom view is defined, the block uses the default template `block/fields`,
+which loops through all fields in the order they were hydrated:
+
+```php
+<?php
+$attributes = $block->options()->toTagAttributes();
+$attributes->add('class', ['block', 'block-fields']);
+?>
+<div<?= $attributes ?>>
+    <?php foreach ($block->fields()->all() as $field) { ?>
+        <div class="block-field">
+            <?= $block->renderField($field) ?>
+        </div>
+    <?php } ?>
+</div>
+```
+
+This is ideal for simple blocks where fields should appear sequentially.
+
+##### Custom Block View (Hero Example)
+
+More advanced blocks define their own view and place fields manually:
+
+```php
+<?php
+$attributes = $block->options()->toTagAttributes();
+$attributes->add('class', ['block', 'block-hero']);
+$fields = $block->fields();
+?>
+<div<?= $attributes ?>>
+    <div class="hero-body">
+        <div class="content"><?= $block->renderField($fields->get('translation')) ?></div>
+    </div>
+    <div class="hero-media"><?= $block->renderField($fields->get('data.image')) ?></div>
+</div>
+```
+
+This demonstrates:
+
+- accessing fields by name
+- rendering fields in custom layout regions
+- combining block options with custom HTML structure
+
+##### Fields Accessor
+
+`$block->fields()` returns an anonymous accessor object with:
+
+- `has($name)` - check if a field exists
+- `get($name)` - return a field or [Null Field](#fieldnullfield)
+- `data($name)` - return a [Data Field](#fielddata)
+- `all()` - return all fields
+
+Example:
+
+```php
+$fields = $block->fields();
+
+if ($fields->has('translation')) {
+    echo $block->renderField($fields->get('translation'));
+}
+```
+
+If a field does not exist, `get()` returns a `NullField`, which safely renders empty output.
+
+Example: Accessing data fields
+
+```php
+$display = $fields->data('data.display');
+
+if ($display->contains('image')) {
+    // The user enabled the "Preview Image" option
+}
+```
+
+For more info see: [Data Field](#fielddata)
+
+##### Block Options (in views)
+
+`$block->options()` returns an `OptionsInterface` instance used to generate HTML attributes:
+
+```php
+$attributes = $block->options()->toTagAttributes();
+$attributes->add('class', ['block', 'block-hero']);
+```
+
+Options may include:
+
+- CSS classes
+- spacing
+- layout modifiers
+- view overrides
+
+For details, see [Block Options](#block-options)
+
+##### Notes
+
+- Always use `renderField()` instead of calling field methods directly.
+- Custom views should access fields via `$block->fields()->get('name')`.
+- The block's view name is resolved automatically by the factory.
+- `NullField` ensures missing fields never break rendering.
+
+For a complete list of all field classes that can be used in block factories and rendered via `renderField()`, see the [Available Fields](#available-fields) section.
+
+### Using AbstractItems
+
+#### Creating Editable Block
+
+Editable blocks based on `AbstractItems` are designed for **repeatable item
+lists** - blocks where the editor manages a collection of entries that each
+share the same set of fields. Blocks such as FAQ, Features, and Team Members
+are built using this base class.
+
+To create an editable item-list block, extend `AbstractItems` and implement:
+
+- `type()` - the unique block identifier
+- `title()` - the human-readable name shown in the editor
+- `description()` - a short explanation for editors
+- `icon()` - an SVG icon (HTML-escaped)
+- `configureItemFields()` - the CRUD fields used to edit **each item**
+
+Below is the built-in **FAQ** block:
+
+```php
+declare(strict_types=1);
+
+namespace Tobento\App\Block\Editable;
+
+use Tobento\App\Crud\Action\ActionInterface;
+use Tobento\App\Crud\Field;
+use Tobento\App\Crud\Field\FieldInterface;
+use Tobento\App\Crud\Field\FieldsInterface;
+use function Tobento\App\Translation\trans;
+
+class Faq extends AbstractItems
+{
+    protected function configureItemFields(ActionInterface $action): iterable|FieldsInterface
+    {
+        yield new Field\Text(name: 'question', label: trans('Question'))
+            ->validate('required|htmlclean|maxLen:250')
+            ->translatable();
+
+        yield new Field\Textarea(name: 'answer', label: trans('Answer'))
+            ->validate('required|string|maxLen:5000')
+            ->translatable();
+    }
+
+    public function type(): string
+    {
+        return 'faq';
+    }
+
+    public function title(): string
+    {
+        return trans('FAQ');
+    }
+
+    public function description(): string
+    {
+        return trans('Frequently asked questions.');
+    }
+
+    public function icon(): string
+    {
+        return '<svg ...></svg>';
+    }
+}
+```
+
+**Notes**
+
+- `configureItemFields()` defines the fields repeated for **every item**, not the block as a whole.
+- Only a limited set of field types is allowed inside items: `Checkboxes`, `File`, `FileSource`, `Html`, `Options`, `Radios`, `Select`, `SingleOptions`, `Text`, `Textarea`, and `Value`. Using an unsupported field type throws an `InvalidArgumentException`.
+- `maxItems()` limits how many items an editor may add (default `50`).
+- `defaultItems()` sets how many empty items are shown when the block is first created (default `1`).
+- `addNewItemText()` controls the label of the "add item" button.
+- File fields inside items are automatically normalized during store and update, the same way single file fields are handled in [`toFields()`](#about-tofields).
+- Options (layout, classes, margin, etc.) are automatically appended via `$this->options->configureFields()`.
+
+#### Creating Block Factory
+
+A block factory for item-list blocks is responsible for hydrating each item's
+raw CRUD data into typed, renderable field objects. Factories based on
+`Tobento\App\Block\Factory\AbstractItems` handle this hydration for you.
+
+To create a factory for an `AbstractItems`-based block:
+
+- extend `Tobento\App\Block\Factory\AbstractItems`
+- implement:
+  - `type()`
+  - `configureFieldMapping()`
+  - `configureTranslatableFields()`
+  - optionally: `viewName()`
+
+Below is the factory for the built-in **FAQ** block:
+
+```php
+declare(strict_types=1);
+
+namespace Tobento\App\Block\Factory;
+
+use Tobento\App\Block\Field;
+use Tobento\App\Block\FieldInterface;
+
+class Faq extends AbstractItems
+{
+    protected function configureFieldMapping(): iterable
+    {
+        return [
+            'question' => Field\Text::class,
+            'answer'   => Field\HtmlTextEditor::class,
+        ];
+    }
+
+    protected function configureTranslatableFields(): array
+    {
+        return ['question', 'answer'];
+    }
+
+    public function type(): string
+    {
+        return 'faq';
+    }
+}
+```
+
+**Notes**
+
+- `configureFieldMapping()` maps each item's field names to the renderable field classes used to render them.
+- `configureTranslatableFields()` defines which item fields support localization; only fields listed here are resolved to the current locale via `localizeItems()`.
+- `type()` must match the type returned by the corresponding editable block so the block manager can correctly pair editable configuration, hydration, and rendering.
+- `viewName()` defaults to `block/items` and determines the base template used to render the block. Override it if your block needs a different base view.
+- Supported field mappings out of the box are `Field\Text`, `Field\Html`, `Field\HtmlTextEditor`, `Field\Image`, `Field\File`, and `Field\FileSource`. Unmapped or unrecognized classes are silently skipped during hydration.
+
+For a complete overview of all renderable field classes that can be used in
+`configureFieldMapping()`, see the [Available Fields](#available-fields) section.
+
+#### Rendering Block
+
+Blocks created by `Tobento\App\Block\Factory\AbstractItems` are rendered using
+`Tobento\App\Block\Block\Items`. This block represents a collection of items,
+where each item is a set of named `FieldInterface` instances, and provides
+helpers for rendering them in both editable mode and default mode.
+
+**renderField()**
+
+Just like the `Fields` block, `Items` exposes `renderField()`, which
+automatically selects the correct rendering mode:
+
+- **editable mode** `FieldInterface::renderEditable()`
+- **default mode** `FieldInterface::render()`
+
+```php
+<?= $block->renderField($field) ?>
+```
+
+Views never need to check whether the block is currently being edited.
+
+##### Default Items View
+
+If no custom view is defined, the block uses the default template
+`block/items`, which loops through all items and renders each item's fields:
+
+```php
+<?php
+$attributes = $block->options()->toTagAttributes();
+$attributes->add('class', ['block', 'block-items', 'cards', 'cards-small']);
+?>
+<div<?= $attributes ?>>
+    <?php foreach ($block->items() as $item) { ?>
+        <div class="card">
+            <div class="card-body">
+                <?php foreach ($item->all() as $field) { ?>
+                    <div class="block-items-field">
+                        <?= $block->renderField($field) ?>
+                    </div>
+                <?php } ?>
+            </div>
+        </div>
+    <?php } ?>
+</div>
+```
+
+This default is ideal for simple item blocks where every field can be rendered the same way, without distinguishing its role.
+
+##### Custom Items View (FAQ Example)
+
+Blocks whose fields have distinct roles - such as FAQ, where a question and
+its answer should be laid out differently - define their own view and place
+fields manually:
+
+```php
+<?php
+$attributes = $block->options()->toTagAttributes();
+$attributes->add('class', ['block', 'block-faq']);
+?>
+<div<?= $attributes ?>>
+    <?php foreach ($block->items() as $item) { ?>
+        <div class="faq-item">
+            <div class="faq-question"><?= $block->renderField($item->get('question')) ?></div>
+            <div class="faq-answer"><?= $block->renderField($item->get('answer')) ?></div>
+        </div>
+    <?php } ?>
+</div>
+```
+
+This demonstrates:
+
+- accessing an item's fields by name via `get()`
+- rendering fields into distinct, semantically meaningful layout regions
+- combining block options with a custom item structure
+
+Use the default `block/items` view for uniform item lists, and a custom view like this whenever an item's fields play different visual or semantic roles.
+
+##### Items Accessor
+
+`$block->items()` returns an array of anonymous item accessor objects, each
+exposing:
+
+- `has($name)` - check if a field exists on the item
+- `get($name)` - return the field, or `NullField` if it doesn't exist
+- `data($name)` - return a [Data Field](#fielddata)
+- `all()` - return all fields on the item
+
+Example:
+
+```php
+foreach ($block->items() as $item) {
+    if ($item->has('question')) {
+        echo $block->renderField($item->get('question'));
+    }
+}
+```
+
+If a field does not exist, `get()` returns a `NullField`, which safely renders
+empty output - the same behavior as the `Fields` block's accessor.
+
+##### Notes
+
+- Always use `renderField()` instead of calling field methods directly.
+- Custom views iterate `$block->items()` and access each item's fields via `get('name')`.
+- The block's view name is resolved automatically by the factory, the same way as [Block Options](#block-options) and view namespaces work for `AbstractFields`-based blocks.
+
+For a complete list of all field classes that can be used in block factories and rendered via `renderField()`, see the [Available Fields](#available-fields) section.
+
+### Using AbstractRepository
+
+#### Creating Editable Block
+
+Editable blocks based on `AbstractRepository` are designed for blocks that
+**list items pulled from a repository** - for example a list of the latest
+articles, products, or events - rather than data entered directly by the
+editor. The block only lets the editor configure *how* items are selected
+(sorting, limit, categories, or specific items), not the item content itself.
+
+To create an editable repository-driven block, extend `AbstractRepository`
+and implement:
+
+- `type()` - the unique block identifier
+- `title()` - the human-readable name shown in the editor
+- `description()` - a short explanation for editors
+- `icon()` - an SVG icon (HTML-escaped)
+- `itemRepository()` - the repository class used to fetch items
+- `itemBaseWhere()` - base where conditions applied to every item query
+- `itemToOption()` - converts a repository item into a selectable option
+- `taxonomyRepository()` - the taxonomy repository class, or `null` if not used
+- `taxonomyBaseWhere()` - base where conditions applied to taxonomy queries
+- `taxonomyItemToOption()` - converts a repository taxonomy item into a selectable option
+
+Below is an example for an **Articles** block:
+
+```php
+declare(strict_types=1);
+
+namespace App\Block;
+
+use Tobento\App\Block\Editable\AbstractRepository;
+use Tobento\App\Crud\Field;
+use function Tobento\App\Translation\trans;
+
+class Articles extends AbstractRepository
+{
+    public function type(): string
+    {
+        return 'articles';
+    }
+
+    public function title(): string
+    {
+        return trans('Articles');
+    }
+
+    public function description(): string
+    {
+        return trans('Displays a list of articles.');
+    }
+
+    public function icon(): string
+    {
+        return '<svg ...></svg>';
+    }
+
+    protected function itemRepository(): string
+    {
+        return ArticleRepository::class;
+    }
+
+    protected function itemBaseWhere(): array
+    {
+        return ['status' => 'published'];
+    }
+
+    protected function itemToOption(object $item): Field\Option
+    {
+        return new Field\Option(value: $item->id(), text: $item->title());
+    }
+
+    protected function taxonomyRepository(): null|string
+    {
+        return CategoryRepository::class;
+    }
+
+    protected function taxonomyBaseWhere(): array
+    {
+        return [];
+    }
+
+    protected function taxonomyItemToOption(object $item): Field\Option
+    {
+        return new Field\Option(value: $item->id(), text: $item->name());
+    }
+}
+```
+
+**Notes**
+
+- The built-in fields (`sortBy`, `limit`, `taxonomy`, `items`) are added automatically based on `withDefaultFields()`; by default, all four are enabled.
+- `withDefaultFields()` returns a new instance limited to the specified field names, letting you disable fields your block doesn't need, e.g. `$editable->withDefaultFields('limit', 'items')` to drop sorting and taxonomy selection.
+- The `taxonomy` field is only added when both `taxonomyRepository()` returns a class **and** the field is included in `defaultFieldNames`.
+- The `items` field lets editors pick specific items directly, in addition to (or instead of) taxonomy-based filtering.
+- Options (layout, classes, margin, etc.) are automatically appended via `$this->options->configureFields()`.
+
+#### Creating Block Factory
+
+A block factory for repository-driven blocks is responsible for resolving
+the actual repository services, applying locale, filtering, sorting, and
+taxonomy resolution, then handing the result to the block for rendering.
+Factories based on `Tobento\App\Block\Factory\AbstractRepository` handle
+this for you.
+
+To create a factory for an `AbstractRepository`-based block:
+
+- extend `Tobento\App\Block\Factory\AbstractRepository`
+- implement:
+  - `type()`
+  - `viewName()`
+  - `itemRepository()`
+  - `itemBaseWhere()`
+  - `itemsOrderByResolver()`
+  - `taxonomyRepository()`
+  - `taxonomyBaseWhere()`
+  - `taxonomyIdsResolver()`
+
+Below is an example factory for the **Articles** block:
+
+```php
+declare(strict_types=1);
+
+namespace Tobento\App\Block\Factory;
+
+use Tobento\Service\Repository\RepositoryInterface;
+
+class Articles extends AbstractRepository
+{
+    public function type(): string
+    {
+        return 'articles';
+    }
+
+    public function viewName(): string
+    {
+        return 'block/articles';
+    }
+
+    protected function itemRepository(): string
+    {
+        return ArticleRepository::class;
+    }
+
+    protected function itemBaseWhere(): array
+    {
+        return ['status' => 'published'];
+    }
+
+    protected function itemsOrderByResolver(): null|callable
+    {
+        return function (string $sortBy): array {
+            return match ($sortBy) {
+                'title' => ['title' => 'asc'],
+                'date' => ['date_created' => 'desc'],
+                default => [],
+            };
+        };
+    }
+
+    protected function taxonomyRepository(): null|string
+    {
+        return CategoryRepository::class;
+    }
+
+    protected function taxonomyBaseWhere(): array
+    {
+        return [];
+    }
+
+    protected function taxonomyIdsResolver(): null|callable
+    {
+        return function (RepositoryInterface $taxonomyRepository, array $taxonomyIds): array {
+            $categories = $taxonomyRepository->findAll(where: ['id' => ['in' => $taxonomyIds]]);
+
+            $itemIds = [];
+
+            foreach ($categories as $category) {
+                $itemIds = [...$itemIds, ...$category->articleIds()];
+            }
+
+            return array_unique($itemIds);
+        };
+    }
+}
+```
+
+**Notes**
+
+- `viewName()` must return a dedicated view such as `block/articles`, `block/products`, or `block/events` - there is no generic repository fallback view, so every repository block needs its own theme template.
+- `itemsOrderByResolver()` maps the raw `sortBy` value selected in the editor to a repository-compatible `orderBy` array. Returning `null` disables ordering entirely.
+- `taxonomyIdsResolver()` converts the selected taxonomy IDs into a list of item IDs, which are merged into the item filter. Returning `null` disables taxonomy-based filtering entirely, even if a taxonomy repository is configured.
+- If the resolved item repository does not implement `RepositoryInterface`, or is otherwise unavailable in the container, `createBlock()` returns a `NullBlock` instead of throwing, so a misconfigured block fails safely with no output.
+- If the repository implements `LocalesAware`, the factory automatically switches it to the block's locale before querying, so items are always fetched in the correct language.
+- `idName()` defaults to `'id'` and defines which field is used to filter by selected item IDs. Override it if your repository uses a different primary key name.
+
+#### Rendering Block
+
+Blocks created by `Tobento\App\Block\Factory\AbstractRepository` are rendered
+using `Tobento\App\Block\Block\Repository`. Unlike `Fields` and `Items`, this
+block does not deal with `FieldInterface` instances at all - it fetches raw
+items from the repository at render time and passes them straight to the view.
+
+```php
+public function render(): string
+{
+    // resolving taxonomy ids, item id filtering, fetching and sorting items...
+
+    return $this->view->render(view: $view, data: [
+        'block' => $this,
+        'items' => $items,
+        'generateImagesInBackground' => $this->generateImagesInBackground,
+    ]);
+}
+```
+
+**How rendering works**
+
+- If no item repository could be resolved, the fetched items list is simply empty, and the view still renders normally with an empty `$items`.
+- If a taxonomy repository and resolver are configured and taxonomy IDs are selected, matching item IDs are resolved and merged with any explicitly selected item IDs.
+- If any item IDs are present (explicit or taxonomy-resolved), they're added as an `in` where condition.
+- Items are fetched via `itemRepository->findAll()`, respecting `itemBaseWhere`, the resolved `orderBy`, and `maxNumberOfItems` (capped at `1000`).
+- The resolved items are passed to the view as `$items`, alongside `$block` and `$generateImagesInBackground`.
+
+##### Example View
+
+```php
+<?php
+$attributes = $block->options()->toTagAttributes();
+$attributes->add('class', ['block', 'block-articles', 'cards']);
+?>
+<div<?= $attributes ?>>
+    <?php foreach ($items as $item) { ?>
+        <div class="card">
+            <h3><?= $view->esc($item->title()) ?></h3>
+            <p><?= $view->esc($item->excerpt()) ?></p>
+        </div>
+    <?php } ?>
+</div>
+```
+
+Unlike `Fields` and `Items` blocks, there is no `renderField()` helper here
+and no editable/default rendering distinction - repository blocks always
+render the same way, since their content comes from the repository rather
+than editable CRUD data.
+
+##### Notes
+
+- Repository blocks have no `NullField`/field-accessor concept; work with `$items` directly in the view as plain repository entities.
+- Since items are fetched fresh on every render, repository blocks always reflect the current state of the underlying data - unlike `Fields` or `Items` blocks, which render whatever was stored at edit time.
+- A repository block silently renders empty output rather than throwing when misconfigured, so verify your repository and taxonomy resolvers manually during development rather than relying on visible errors.
+
+##### Configuring
+
+In the [Block Config](https://github.com/tobento-ch/app-block/tree/2.x#block-config) you may configure the existing `default` editor or create new editors using the `EditorFactory::class`, the same way as any other block:
+
+```php
+use Tobento\App\Block\Editable;
+use Tobento\App\Block\EditorInterface;
+use Tobento\App\Block\Factory;
+use Tobento\App\Block\Editor\EditorFactory;
+
+'editors' => [
+    'default' => static function (EditorFactory $factory): EditorInterface {
+        $factory->addEditableBlocks([
+            'articles' => Editable\Articles::class,
+        ]);
+
+        $factory->addBlockFactories([
+            'articles' => Factory\Articles::class,
+        ]);
+
+        return $factory->createEditor(name: 'default');
+    },
+],
+```
+
+### Available Fields
+
+Renderable field classes used by block factories to transform editable CRUD fields
+into final block output. Each field corresponds to a class in `Tobento\App\Block\Field`
+and implements `FieldInterface` (`render()` for default mode, `renderEditable()` for
+editable mode).
+
+- [Field\Data](#fielddata)
+- [Field\File](#fieldfile)
+- [Field\Files](#fieldfiles)
+- [Field\Html](#fieldhtml)
+- [Field\HtmlTextEditor](#fieldhtmltexteditor)
+- [Field\Image](#fieldimage)
+- [Field\ListField](#fieldlistfield)
+- [Field\NullField](#fieldnullfield)
+- [Field\Text](#fieldtext)
+
+Fields are referenced by class in a factory's `configureFieldMapping()`, for example:
+
+```php
+namespace Tobento\App\Block\Factory;
+
+use Tobento\App\Block\Field;
+use Tobento\App\Block\FieldInterface;
+
+class Hero extends AbstractFields
+{
+    public function type(): string
+    {
+        return 'hero';
+    }
+
+    protected function configureFieldMapping(): iterable
+    {
+        return [
+            'data.image'  => Field\Image::class,
+            'translation' => Field\HtmlTextEditor::class,
+        ];
+    }
+}
+```
+
+#### `Field\Data`
+
+Represents a structured data field used for configuration, lists, or option sets.  
+Unlike text-based fields, `Field\Data` does not render visible output itself - instead, it provides **typed data** to your block view (arrays).
+
+Use this field when your block needs **non-visual data**, such as:
+
+- display options  
+- configuration arrays  
+
+```php
+'display' => Field\Data::class,
+'options'   => Field\Data::class,
+```
+
+**Notes**
+- `Field\Data` does not produce HTML output. Rendering is entirely handled in your block view.
+- The returned value depends is an `array`.
+- Access the data field using `$block->fields()->data('name')`.
+
+**Mapping CRUD Fields**
+
+Only CRUD fields that return structured values (arrays) should be mapped to this block field.
+
+Supported mappings:
+
+- **[Field\Checkboxes](https://github.com/tobento-ch/app-crud#checkboxes-field)** - array of selected values  
+- **[Field\Options](https://github.com/tobento-ch/app-crud#options-field)** - array of selected values  
+
+**View Example**
+
+```php
+<?php
+$fields = $block->fields();
+
+// Access a data field (array-like object)
+$display = $fields->data('display');
+
+if ($display->contains('image')) {
+    // User enabled the "Preview Image" option
+}
+
+// Access another data field
+$content = $fields->data('content');
+
+// Check if a nested key exists inside the data structure
+if ($content->has('meta.title')) {
+    // The nested key "meta.title" exists
+}
+
+// Access nested data with a fallback value
+$title = $content->get('meta.title', 'fallback value');
+```
+
+#### `Field\File`
+
+Renders a single downloadable file as a link. Use this in `configureFieldMapping()`
+for a CRUD [`Field\File`](https://github.com/tobento-ch/app-crud#file-field) field that represents one file (e.g. a PDF attached
+to a block).
+
+```php
+'data.attachment' => Field\File::class,
+```
+
+**Notes**
+
+- `file()` returns the underlying normalized `Item` collection, giving custom views full control over how the file is rendered — the built-in `render()` only provides a minimal fallback link.
+- `definition()` / `withDefinition()` let you override the picture or file definition used, and support named definitions via an array (e.g. multiple sizes or variants).
+- If the file has no `src`, `render()` returns an empty string.
+- The link text falls back to the file's `title`, or the filename itself if no title is set.
+- `renderEditable()` is identical to `render()` - there is no separate editable markup for this field.
+
+**Mapping CRUD Fields**
+
+This field is designed to work with CRUD **File** fields that store file metadata (`storage`, `path`, etc.).  
+The CRUD field does not map as a string. Instead, the File field reads the stored file information from `data.file`.
+
+Supported source field:
+
+- **[Field\File](https://github.com/tobento-ch/app-crud#file-field)** - provides the file data used by this renderable field
+
+**Custom View Example**
+
+For custom views you can access the underlying `Item` and its raw values directly,
+instead of relying on the field's default `render()` output:
+
+```php
+<?php
+$fileField = $block->fields()->get('data.attachment');
+$file = $fileField->file();
+$src = $file->get('src', '');
+
+// you may get a definition if rendering a preview image
+$definition = $fileField->definition(name: 'large');
+?>
+<?php if ($src) { ?>
+    <a href="<?= $view->esc($view->routeUrl('media.file.download', [
+        'storage' => $file->raw('storage', 'downloads'),
+        'path' => $src,
+    ])) ?>">
+        <?= $view->esc($file->get('title', basename($src))) ?>
+    </a>
+<?php } ?>
+```
+
+#### `Field\Files`
+
+Renders a list of downloadable files. Use this in `configureFieldMapping()` for a
+CRUD [`Field\Files`](https://github.com/tobento-ch/app-crud#files-field) field that stores multiple files, such as the [Downloads Block](#downloads-block).
+
+```php
+'data.files' => Field\Files::class,
+```
+
+**Notes**
+
+- `files()` returns the underlying normalized `Items` collection, for custom views that need more control than the built-in `<ul>` markup — this is how complex blocks like Downloads build their own layout.
+- `definition()` reads the currently set picture/file definition; pass a `name` to look up a specific one when multiple named definitions were configured as an array, otherwise it falls back to `'block-field-files'`. Use this when a custom view needs to render a preview image alongside each file.
+- `withDefinition()` overrides the definition used for rendering — note this replaces the definition entirely with a single value, so it's not for picking a named definition (use `definition(name: ...)` for that), but for swapping the default definition altogether from within a custom view.
+- Each file without a `src` is silently skipped.
+- The link text falls back to the file's `name`, or the filename itself if no name is set.
+- `renderEditable()` is identical to `render()`.
+
+**Mapping CRUD Fields**
+
+This field is designed to work with CRUD **Files** fields that store multiple file
+metadata entries (`storage`, `path`, `title`, etc.).  
+The CRUD field does **not** map as a string. Instead, the Files field reads the stored file information from `data.files`.
+
+Supported source field:
+
+- **[Field\Files](https://github.com/tobento-ch/app-crud#files-field)** - provides the array of file metadata used by this renderable field
+
+**Custom View Example**
+
+For custom views you can iterate the underlying `Items` collection directly,
+instead of relying on the field's default `<ul>` output:
+
+```php
+<?php
+$filesField = $block->fields()->get('data.files');
+
+// you may get a definition if rendering a preview image
+$definition = $filesField->definition(name: 'large');
+?>
+<div class="block-files">
+    <?php foreach ($filesField->files() as $file) { ?>
+        <?php $src = $file->get('src', ''); ?>
+        <?php if ($src) { ?>
+            <a href="<?= $view->esc($view->routeUrl('media.file.download', [
+                'storage' => $file->raw('storage', 'downloads'),
+                'path' => $src,
+            ])) ?>">
+                <?= $view->esc($file->get('name', basename($src))) ?>
+            </a>
+        <?php } ?>
+    <?php } ?>
+</div>
+```
+
+#### `Field\Html`
+
+Renders sanitized, editor-authored raw HTML. Use this for CRUD `Html` fields
+where the editor writes markup directly rather than through a rich-text toolbar.
+
+```php
+'content' => Field\Html::class,
+```
+
+**Notes**
+
+- The HTML is always passed through `$view->sanitizeHtml()` before output, both in `render()` and `renderEditable()`.
+- Unlike `HtmlTextEditor`, this field has no JS editor wrapper - it renders the sanitized HTML directly in both modes.
+
+**Mapping CRUD Fields**
+
+Only CRUD fields that return a **string value** can be mapped to this block field.
+
+Supported mappings:
+
+- **[Field\Text](https://github.com/tobento-ch/app-crud#text-field)** - plain string  
+- **[Field\Textarea](https://github.com/tobento-ch/app-crud#textarea-field)** - multi‑line string  
+- **[Field\Html](https://github.com/tobento-ch/app-crud#html-field)** - HTML string  
+- **[Field\SingleOptions](https://github.com/tobento-ch/app-crud#singleoptions-field)** - single option value  
+- **[Field\Radios](https://github.com/tobento-ch/app-crud#radios-field)** - selected radio value  
+- **[Field\Value](https://github.com/tobento-ch/app-crud#value-field)** - raw string value  
+- **[Field\FileSource](https://github.com/tobento-ch/app-crud#filesource-field)** - plain string  
+
+#### `Field\HtmlTextEditor`
+
+Renders rich text produced by a JS-based text editor (the [Js Editor](https://github.com/tobento-ch/js-editor)),
+used for blocks like Hero and Text. Use this whenever a field's content should
+be authored through formatting tools rather than raw HTML or plain text.
+
+```php
+'translation' => Field\HtmlTextEditor::class,
+```
+
+**Notes**
+
+- `render()` returns the sanitized HTML for default mode output.
+- `renderEditable()` wraps the sanitized HTML in a `data-editor`-attributed `<div>`, which is what activates the live JS editor in the browser. This is the mechanism behind blocks like Hero's inline text editing.
+- For item-list blocks, `itemIndex` adds a `data-editor-item` attribute so the JS editor can target the correct item.
+- `withToolbar()` restricts which formatting tools are shown. An empty toolbar means all tools are enabled.
+
+**Mapping CRUD Fields**
+
+Only CRUD fields that return a **string value** can be mapped to this block field.
+
+Supported mappings:
+
+- **[Field\Text](https://github.com/tobento-ch/app-crud#text-field)** - plain string  
+- **[Field\Textarea](https://github.com/tobento-ch/app-crud#textarea-field)** - multi-line string  
+
+#### `Field\Image`
+
+Renders a responsive `<picture>` element via the [Picture Feature](https://github.com/tobento-ch/app-media#picture-feature),
+optionally wrapped in a `<figure>` with a caption.  
+Use this for CRUD `File` fields that hold an image, such as `data.image` on the Hero block.
+
+```php
+'data.image' => Field\Image::class,
+```
+
+**Notes**
+
+- `withDefinition()` overrides which [picture definition](https://github.com/tobento-ch/app-media#picture-feature) is used to generate the responsive image variants.
+- If an `imgAlt` value is set, it's applied as the `<img>` element's `alt` attribute.
+- If `imgWidth` is `50` or greater, the image is resized to that width, and its `height` is recalculated proportionally from the original dimensions when available.
+- If a `figcaption` is set, the output is wrapped in `<figure><figcaption>` with `withFigureAttributes()` controlling the figure's own attributes; without a caption, only the `<picture>` markup is returned.
+- `generateImagesInBackground` controls whether missing image variants are generated synchronously or queued, the same setting used by [Background Image Generation](#background-image-generation).
+- `renderEditable()` is identical to `render()` - the image itself isn't edited inline. File replacement happens through the CRUD file field, not this renderable field.
+
+**Mapping CRUD Fields**
+
+This field is designed to work with CRUD **File** fields that store image metadata (`storage`, `path`, etc.).  
+The CRUD field does not map as a string. Instead, the Image field reads the stored file information from `data.image`.
+
+Supported source field:
+
+- **[Field\File](https://github.com/tobento-ch/app-crud#file-field)** - provides the image file data used by this renderable field
+
+#### `Field\ListField`
+
+Renders a simple unordered list (`<ul>`) from an array of scalar values.  
+Use this for CRUD fields that store a flat list of strings, such as tags or bullet points.
+
+```php
+'data.tags' => Field\ListField::class,
+```
+
+**Notes**
+
+- Each item is normalized via `ensureString()`: strings and `Stringable` values pass through unchanged, scalars and booleans are cast to string, `null` becomes an empty string, and arrays/objects fall back to JSON encoding.
+- Escaping happens in `render()`, not in `ensureString()`, so normalized `Stringable`/`Htmlable` values are still escaped correctly through `$view->esc()`.
+- If the underlying array is empty, `render()` returns an empty string rather than an empty `<ul>`.
+- `renderEditable()` is identical to `render()`.
+
+**Mapping CRUD Fields**
+
+Only CRUD fields that return an **array value** can be mapped to this block field.
+
+Supported mappings:
+
+- **[Field\Checkboxes](https://github.com/tobento-ch/app-crud#checkboxes-field)** - returns an array of selected values  
+- **[Field\Options](https://github.com/tobento-ch/app-crud#options-field)** - returns an array of selected option values  
+
+#### `Field\NullField`
+
+A non-rendering placeholder field. Always returns an empty string from both
+`render()` and `renderEditable()`. This is what `$fields->get($name)` and item
+accessors return when the requested field doesn't exist, so views calling
+`renderField()` on a missing field safely produce no output instead of an error.
+
+```php
+$fields->get('nonexistent'); // returns a NullField instance
+```
+
+**Notes**
+
+- You generally don't reference `Field\NullField::class` in `configureFieldMapping()` yourself - it's returned automatically by the [Fields Accessor](#fields-accessor) and [Items Accessor](#items-accessor) as a safe fallback for missing fields.
+
+#### `Field\Text`
+
+Renders plain, HTML-escaped text. Use this for simple CRUD `Text` fields where
+no formatting or markup should be allowed, such as a title, label, or short
+caption.
+
+```php
+'question' => Field\Text::class,
+```
+
+**Notes**
+
+- The text is always passed through `$view->esc()`, so any HTML in the stored value is rendered as literal text rather than markup.
+- `renderEditable()` is identical to `render()` — there is no separate editable markup for this field, since plain text is edited entirely through the CRUD form field, not inline.
+
+**Mapping CRUD Fields**
+
+Only CRUD fields that return a **string value** can be mapped to this block field.
+
+Supported mappings:
+
+- **[Field\Text](https://github.com/tobento-ch/app-crud#text-field)** - plain string  
+- **[Field\Textarea](https://github.com/tobento-ch/app-crud#textarea-field)** - multi‑line string  
+- **[Field\SingleOptions](https://github.com/tobento-ch/app-crud#singleoptions-field)** - single option value  
+- **[Field\Radios](https://github.com/tobento-ch/app-crud#radios-field)** - selected radio value  
+- **[Field\Value](https://github.com/tobento-ch/app-crud#value-field)** - raw string value  
+- **[Field\FileSource](https://github.com/tobento-ch/app-crud#filesource-field)** - plain string  
 
 ## Block Options
 
