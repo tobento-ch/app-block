@@ -10,11 +10,10 @@
  */
 
 declare(strict_types=1);
- 
+
 namespace Tobento\App\Block\Editable;
 
 use Tobento\App\Block\Editable\Option\OptionsInterface;
-use Tobento\App\Block\EditableBlockInterface;
 use Tobento\App\Crud\Action\ActionInterface;
 use Tobento\App\Crud\Field;
 use Tobento\App\Crud\Field\FieldInterface;
@@ -22,15 +21,11 @@ use Tobento\App\Crud\Field\FieldsInterface;
 use function Tobento\App\Translation\trans;
 
 /**
- * Image
+ * Image Editable Block
  */
-class Image implements EditableBlockInterface
+class Image extends AbstractFields
 {
-    use Traits\NormalizesFileSourceInput;
-    
     /**
-     * Create a new Image instance.
-     *
      * @param OptionsInterface $options
      * @param array<array-key, string> $pictureDefinitions
      */
@@ -40,7 +35,47 @@ class Image implements EditableBlockInterface
     ) {}
     
     /**
-     * Returns the title.
+     * Returns the block type used for registration.
+     *
+     * @return string
+     */
+    public function type(): string
+    {
+        return 'image';
+    }
+    
+    /**
+     * Returns the configured block fields.
+     *
+     * @param ActionInterface $action
+     * @return iterable<FieldInterface>|FieldsInterface
+     */
+    protected function configureBlockFields(ActionInterface $action): iterable|FieldsInterface
+    {
+        yield new Field\File(name: 'data.image', label: trans('Image'))
+            ->group(trans('Image'))
+            ->translatable()
+            ->fileSource(function(Field\FileSource $fs): void {
+                $fs->storage(name: 'uploads-public');
+                $fs->allowedExtensions('jpg', 'png', 'webp');
+                $fs->pictureEditor(template: 'default', definitions: $this->pictureDefinitions);
+            })
+            ->fields(
+                new Field\Text('alt', trans('Alternative Text'))
+                    ->validate('string|htmlclean')
+                    ->translatable(),
+                new Field\Text('figcaption', trans('A caption for the photo.'))
+                    ->validate('string|htmlclean')
+                    ->translatable(),
+                new Field\Text('width', trans('Width'))
+                    ->type('number')
+                    ->validate('numeric|minNum:50|maxNum:3000'),
+            )
+            ->storeFilenameTo('alt');
+    }
+
+    /**
+     * Returns the block title.
      *
      * @return string
      */
@@ -48,9 +83,9 @@ class Image implements EditableBlockInterface
     {
         return trans('Image');
     }
-    
+
     /**
-     * Returns the description.
+     * Returns the block description.
      *
      * @return string
      */
@@ -58,7 +93,7 @@ class Image implements EditableBlockInterface
     {
         return trans('Add an image.');
     }
-    
+
     /**
      * Returns the icon. Any data from unsecure source must be HTML escaped.
      *
@@ -67,72 +102,5 @@ class Image implements EditableBlockInterface
     public function icon(): string
     {
         return '<svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 8h.01" /><path d="M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12z" /><path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l5 5" /><path d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3" /></svg>';
-    }
-    
-    /**
-     * Returns the default block.
-     *
-     * @return array<string, mixed>
-     */
-    public function defaultBlock(): array
-    {
-        return ['type' => 'image'];
-    }
-    
-    /**
-     * Returns the configured fields.
-     *
-     * @param ActionInterface $action
-     * @return iterable<FieldInterface>|FieldsInterface
-     */
-    public function configureFields(ActionInterface $action): iterable|FieldsInterface
-    {
-        return [
-            new Field\File(name: 'data.image', label: trans('Image'))
-                ->group(trans('Image'))
-                ->translatable()
-                ->fileSource(function(Field\FileSource $fs): void {
-                    $fs->storage(name: 'uploads-public');
-                    $fs->allowedExtensions('jpg', 'png', 'webp');
-                    $fs->pictureEditor(template: 'default', definitions: $this->pictureDefinitions);
-                })
-                ->fields(
-                    new Field\Text('alt', trans('Alternative Text'))
-                        ->validate('string|htmlclean')
-                        ->translatable(),
-                    new Field\Text('figcaption', trans('A caption for the photo.'))
-                        ->validate('string|htmlclean')
-                        ->translatable(),
-                    new Field\Text('width', trans('Width'))
-                        ->type('number')
-                        ->validate('numeric|minNum:50|maxNum:3000'),
-                )
-                ->storeFilenameTo('alt'),
-            ...$this->options->configureFields($action, $this),
-        ];
-    }
-    
-    /**
-     * Map the block to the fields.
-     *
-     * @param array<string, mixed> $block
-     * @param ActionInterface $action
-     * @return array<string, mixed>
-     */
-    public function toFields(array $block, ActionInterface $action): array
-    {
-        // UPDATE: remove stored src so FileSource keeps existing file
-        if ($action->name() === 'update') {
-            unset($block['data']['image']['src']);
-        }
-
-        // STORE (copy): convert stored format to FileSource input format
-        if ($action->name() === 'store') {
-            if (isset($block['data']['image'])) {
-                $block['data']['image'] = $this->normalizeFileSource($block['data']['image']);
-            }
-        }
-        
-        return $block;
     }
 }
